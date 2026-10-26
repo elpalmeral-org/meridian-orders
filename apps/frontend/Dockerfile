@@ -11,7 +11,7 @@ RUN npm ci --no-audit --no-fund
 COPY . .
 RUN npx ng build --configuration production
 
-FROM nginxinc/nginx-unprivileged:1.29-alpine
+FROM nginxinc/nginx-unprivileged:1.31-alpine
 LABEL org.opencontainers.image.source="https://github.com/elpalmeral-org/meridian-orders" \
       org.opencontainers.image.description="Meridian Orders · frontend (Angular)"
 COPY nginx.conf /etc/nginx/conf.d/default.conf
