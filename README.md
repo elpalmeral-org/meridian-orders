@@ -73,6 +73,20 @@ npm run format:check && npm run lint && npm run test:ci && npx ng build
 npx @fission-ai/openspec@1.15.0 validate --specs --strict
 ```
 
+En cada PR, el workflow [`ci`](.github/workflows/ci.yml) ejecuta solo lo que ha cambiado
+(backend, frontend, spec), construye la imagen de cada app modificada con una prueba de humo, y
+publica un único check agregado, **`ci-ok`**. El check **`conventional-commits`** valida el título
+del PR. Los dos son obligatorios para fusionar en `main`.
+
+```mermaid
+flowchart LR
+    CH["changes<br/>filtros por ruta"] --> BE["backend<br/>ruff · mypy · pytest<br/>migraciones en PostgreSQL 18"]
+    CH --> FE["frontend<br/>prettier · eslint · vitest · build"]
+    CH --> SP["spec<br/>openspec --strict"]
+    BE & FE --> IMG["imagen<br/>hadolint · buildx · humo"]
+    BE & FE & SP & IMG --> OK{{"ci-ok"}}
+```
+
 ## Cómo cambia este repo
 
 Trunk-based: rama corta → PR con título [Conventional Commits](https://www.conventionalcommits.org/es/)

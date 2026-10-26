@@ -1,0 +1,193 @@
+# CI de Meridian Orders: solo se ejecuta lo que cambia (filtros por ruta) y un único check
+# agregado, "ci-ok", es el que exige el ruleset de main.
+name: ci
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  changes:
+    name: qué ha cambiado
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      backend: ${{ steps.filter.outputs.backend }}
+      frontend: ${{ steps.filter.outputs.frontend }}
+      spec: ${{ steps.filter.outputs.spec }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4.0.3
+        id: filter
+        with:
+          filters: |
+            backend:
+              - 'apps/backend/**'
+              - '.github/workflows/ci.yml'
+            frontend:
+              - 'apps/frontend/**'
+              - '.github/workflows/ci.yml'
+            spec:
+              - 'openspec/**'
+              - 'apps/**'
+
+  backend:
+    name: backend · lint, tipos, tests y migraciones
+    needs: changes
+    if: needs.changes.outputs.backend == 'true'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/backend
+    services:
+      postgres:
+        image: postgres:18-alpine # misma versión mayor que el Cluster de CloudNativePG
+        env:
+          POSTGRES_USER: app
+          POSTGRES_PASSWORD: app
+          POSTGRES_DB: app
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U app"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e # v10.3.2
+        with:
+          python-version: "3.14"
+          enable-cache: true
+          cache-dependency-glob: apps/backend/uv.lock
+      - run: uv sync --locked
+      - name: Formato
+        run: uv run ruff format --check .
+      - name: Lint
+        run: uv run ruff check --output-format=github .
+      - name: Tipos (mypy strict)
+        run: uv run mypy
+      - name: Tests (SQLite) y cobertura
+        run: uv run pytest
+      - name: Migraciones contra PostgreSQL
+        env:
+          MERIDIAN_DATABASE_URL: postgresql://app:app@localhost:5432/app
+        run: |
+          uv run alembic upgrade head
+          uv run alembic check
+          uv run alembic downgrade base
+
+  frontend:
+    name: frontend · formato, lint, tests y build
+    needs: changes
+    if: needs.changes.outputs.frontend == 'true'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/frontend
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: apps/frontend/package-lock.json
+      - run: npm ci --no-audit --no-fund
+      - run: npm run format:check
+      - run: npm run lint
+      - run: npm run test:ci
+      - run: npx ng build
+
+  spec:
+    name: spec · OpenSpec estricto
+    needs: changes
+    if: needs.changes.outputs.spec == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "24"
+      - run: npx --yes @fission-ai/openspec@1.15.0 validate --all --strict
+
+  image:
+    name: imagen · ${{ matrix.app }}
+    needs: [changes, backend, frontend]
+    # Se construye la imagen de lo que ha cambiado y ha pasado sus tests (sin publicar: eso es F2.4)
+    if: |
+      always() && !failure() && !cancelled() &&
+      (needs.changes.outputs.backend == 'true' || needs.changes.outputs.frontend == 'true')
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        app: [backend, frontend]
+    steps:
+      - name: ¿Ha cambiado esta app?
+        id: want
+        env:
+          CHANGED: ${{ needs.changes.outputs[matrix.app] }}
+        run: echo "build=$CHANGED" >> "$GITHUB_OUTPUT"
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        if: steps.want.outputs.build == 'true'
+        with:
+          persist-credentials: false
+      - uses: hadolint/hadolint-action@06be81baf89a55ffd0e24b8f04a4185738dd3387 # v3.5.0
+        if: steps.want.outputs.build == 'true'
+        with:
+          dockerfile: apps/${{ matrix.app }}/Dockerfile
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+        if: steps.want.outputs.build == 'true'
+      - uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        if: steps.want.outputs.build == 'true'
+        with:
+          context: apps/${{ matrix.app }}
+          push: false
+          load: true
+          tags: meridian-orders-${{ matrix.app }}:ci
+          cache-from: type=gha,scope=${{ matrix.app }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.app }}
+      - name: Prueba de humo del contenedor
+        if: steps.want.outputs.build == 'true'
+        env:
+          APP: ${{ matrix.app }}
+        run: |
+          if [ "$APP" = backend ]; then
+            docker run -d --name app -p 8000:8000 meridian-orders-backend:ci
+            url=http://localhost:8000/healthz
+          else
+            docker run -d --name app -p 8080:8080 meridian-orders-frontend:ci
+            url=http://localhost:8080/healthz
+          fi
+          for _ in $(seq 1 30); do curl -fsS "$url" && exit 0; sleep 1; done
+          docker logs app; exit 1
+
+  ci-ok:
+    name: ci-ok
+    if: always()
+    needs: [changes, backend, frontend, spec, image]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Todo en verde (o no aplicaba)
+        env:
+          NEEDS: ${{ toJSON(needs) }}
+        run: |
+          echo "$NEEDS" | jq -r 'to_entries[] | "\(.key): \(.value.result)"'
+          echo "$NEEDS" | jq -e 'all(.[]; .result == "success" or .result == "skipped")' > /dev/null

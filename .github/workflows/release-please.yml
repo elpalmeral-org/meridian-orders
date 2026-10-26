@@ -1,0 +1,36 @@
+# Mantiene abierto el PR de release (CHANGELOG + versión). Al fusionarlo crea el tag vX.Y.Z
+# y la release de GitHub. Usa la GitHub App: los PR que abre el GITHUB_TOKEN no lanzarían el CI.
+name: release-please
+
+on:
+  push:
+    branches: [main]
+
+permissions: {}
+
+concurrency:
+  group: release-please
+  cancel-in-progress: false
+
+jobs:
+  release-please:
+    runs-on: ubuntu-latest
+    outputs:
+      release_created: ${{ steps.release.outputs.release_created }}
+      tag_name: ${{ steps.release.outputs.tag_name }}
+    steps:
+      - id: app
+        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
+        with:
+          client-id: ${{ vars.PLATFORM_BOT_CLIENT_ID }}
+          private-key: ${{ secrets.PLATFORM_BOT_PRIVATE_KEY }}
+          # Token mínimo: solo este repo, solo lo que necesita release-please
+          repositories: meridian-orders
+          permission-contents: write
+          permission-pull-requests: write
+      - id: release
+        uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7 # v5.0.0
+        with:
+          token: ${{ steps.app.outputs.token }}
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json
