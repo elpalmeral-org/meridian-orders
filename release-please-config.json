@@ -6,23 +6,61 @@
   "bump-minor-pre-major": true,
   "pull-request-title-pattern": "chore(release): ${version}",
   "changelog-sections": [
-    { "type": "feat", "section": "Nuevas funcionalidades" },
-    { "type": "fix", "section": "Correcciones" },
-    { "type": "perf", "section": "Rendimiento" },
-    { "type": "refactor", "section": "Refactorización", "hidden": true },
-    { "type": "docs", "section": "Documentación", "hidden": true },
-    { "type": "test", "section": "Tests", "hidden": true },
-    { "type": "build", "section": "Build", "hidden": true },
-    { "type": "ci", "section": "CI", "hidden": true },
-    { "type": "chore", "section": "Mantenimiento", "hidden": true }
+    {
+      "type": "feat",
+      "section": "Nuevas funcionalidades"
+    },
+    {
+      "type": "fix",
+      "section": "Correcciones"
+    },
+    {
+      "type": "perf",
+      "section": "Rendimiento"
+    },
+    {
+      "type": "refactor",
+      "section": "Refactorización",
+      "hidden": true
+    },
+    {
+      "type": "docs",
+      "section": "Documentación",
+      "hidden": true
+    },
+    {
+      "type": "test",
+      "section": "Tests",
+      "hidden": true
+    },
+    {
+      "type": "build",
+      "section": "Build",
+      "hidden": true
+    },
+    {
+      "type": "ci",
+      "section": "CI",
+      "hidden": true
+    },
+    {
+      "type": "chore",
+      "section": "Mantenimiento",
+      "hidden": true
+    }
   ],
   "packages": {
     ".": {
       "package-name": "meridian-orders",
       "extra-files": [
         "apps/backend/src/meridian_orders/__init__.py",
-        { "type": "json", "path": "apps/frontend/package.json", "jsonpath": "$.version" }
-      ]
+        {
+          "type": "json",
+          "path": "apps/frontend/package.json",
+          "jsonpath": "$.version"
+        }
+      ],
+      "initial-version": "0.1.0"
     }
   }
 }

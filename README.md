@@ -87,6 +87,24 @@ flowchart LR
     BE & FE & SP & IMG --> OK{{"ci-ok"}}
 ```
 
+## Imágenes publicadas
+
+Cada merge en `main` publica las dos imágenes en GHCR con SBOM y procedencia adjuntos, análisis de
+Grype y **firma cosign keyless**. Cada release re-etiqueta el **mismo digest** como `X.Y.Z`.
+
+| Imagen | Tags |
+|---|---|
+| `ghcr.io/elpalmeral-org/meridian-orders-backend` | `sha-<commit>` · `X.Y.Z` |
+| `ghcr.io/elpalmeral-org/meridian-orders-frontend` | `sha-<commit>` · `X.Y.Z` |
+
+Verificar que una imagen la firmó este repo (y no otro):
+
+```bash
+cosign verify ghcr.io/elpalmeral-org/meridian-orders-backend:0.1.0 \
+  --certificate-identity https://github.com/elpalmeral-org/meridian-orders/.github/workflows/publish.yml@refs/heads/main \
+  --certificate-oidc-issuer https://token.actions.githubusercontent.com
+```
+
 ## Cómo cambia este repo
 
 Trunk-based: rama corta → PR con título [Conventional Commits](https://www.conventionalcommits.org/es/)
