@@ -2,7 +2,7 @@
 # Frontend de Meridian Orders · build con Node y servido por nginx sin privilegios (puerto 8080).
 # Las imágenes base se fijan por digest en F2.4 (Dependabot las mantendrá al día).
 
-FROM node:24-alpine AS build
+FROM node:26-alpine AS build
 WORKDIR /app
 # 1) Dependencias (capa cacheable mientras no cambie package-lock.json)
 COPY package.json package-lock.json ./
