@@ -14,7 +14,13 @@ RUN npx ng build --configuration production
 FROM nginxinc/nginx-unprivileged:1.31-alpine
 LABEL org.opencontainers.image.source="https://github.com/elpalmeral-org/meridian-orders" \
       org.opencontainers.image.description="Meridian Orders · frontend (Angular)"
+# La imagen base se publica cada cierto tiempo y sus paquetes de Alpine van por detrás de los
+# parches de seguridad: se aplican al construir. curl no se usa (el healthcheck lo hace
+# Kubernetes por HTTP), así que se elimina junto con sus librerías.
+USER 0
+RUN apk upgrade --no-cache \
+ && apk del --no-cache curl
+USER 101
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 COPY --from=build /app/dist/frontend/browser /usr/share/nginx/html
 EXPOSE 8080
-# La imagen base ya corre como usuario sin privilegios (uid 101).
