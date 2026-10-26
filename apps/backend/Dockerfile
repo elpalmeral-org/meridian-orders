@@ -2,7 +2,7 @@
 # Backend de Meridian Orders · imagen multi-stage, sin herramientas de build ni root en ejecución.
 # Las imágenes base se fijan por digest en F2.4 (Dependabot las mantendrá al día).
 
-FROM ghcr.io/astral-sh/uv:0.11.32 AS uv
+FROM ghcr.io/astral-sh/uv:0.13.5 AS uv
 
 FROM python:3.14-slim-trixie AS build
 COPY --from=uv /uv /bin/uv
