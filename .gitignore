@@ -1,0 +1,19 @@
+# Python
+.venv/
+__pycache__/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+*.db
+
+# Node / Angular
+node_modules/
+dist/
+.angular/
+
+# Entorno
+.env
+.DS_Store
+.vscode/
+.idea/

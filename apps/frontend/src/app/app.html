@@ -1,0 +1,15 @@
+<header class="topbar">
+  <div class="brand">
+    <span class="logo" aria-hidden="true">◆</span>
+    <h1>Meridian Orders</h1>
+  </div>
+  @if (version(); as v) {
+    <span class="meta" data-testid="api-version">
+      v{{ v }} · <span class="env">{{ environment() }}</span>
+    </span>
+  }
+</header>
+
+<main>
+  <app-orders-page />
+</main>

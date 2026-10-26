@@ -1,0 +1,19 @@
+schema: spec-driven
+
+# Contexto que un agente no puede deducir leyendo el código.
+context: |
+  Meridian Orders es la aplicación de ejemplo del agentic-platform-lab: un gestor de pedidos ficticio.
+  Todos los artefactos (proposal, design, tasks, specs) se escriben en español; las palabras
+  normativas se mantienen en inglés (SHALL, MUST, WHEN, THEN) porque las exige el validador.
+  Monorepo: apps/backend (FastAPI, Python 3.14) y apps/frontend (Angular 22). Un cambio que toca
+  back y front es UN solo cambio de OpenSpec y UN solo PR.
+  Importes en decimal con 2 decimales y moneda ISO 4217 (por defecto EUR); nunca coma flotante.
+  Los datos de ejemplo deben ser ficticios (dominios .example).
+
+rules:
+  proposal:
+    - Indicar siempre qué queda fuera de alcance
+    - Citar los requisitos de specs/ que cambian
+  tasks:
+    - Cada tarea incluye sus tests (pytest en backend, Vitest en frontend)
+    - Si cambia el esquema de datos, incluir la migración de Alembic y su downgrade

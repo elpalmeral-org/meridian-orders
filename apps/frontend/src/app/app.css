@@ -1,0 +1,46 @@
+:host {
+  display: block;
+}
+
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.9rem 1.5rem;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.logo {
+  color: var(--accent);
+  font-size: 1.3rem;
+}
+
+h1 {
+  margin: 0;
+  font-size: 1.15rem;
+  letter-spacing: 0.01em;
+}
+
+.meta {
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.env {
+  text-transform: uppercase;
+  font-weight: 600;
+  color: var(--accent);
+}
+
+main {
+  max-width: 1080px;
+  margin: 1.5rem auto;
+  padding: 0 1rem;
+}
