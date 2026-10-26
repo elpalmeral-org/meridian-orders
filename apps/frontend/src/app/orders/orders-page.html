@@ -1,0 +1,89 @@
+<section class="card">
+  <h2>Nuevo pedido</h2>
+  <form [formGroup]="form" (ngSubmit)="create()" class="new-order">
+    <label>
+      Cliente
+      <input formControlName="customer_name" placeholder="Acme Logística" />
+    </label>
+    <label>
+      Correo
+      <input formControlName="customer_email" type="email" placeholder="compras@acme.example" />
+    </label>
+    <label>
+      Importe (EUR)
+      <input formControlName="total_amount" inputmode="decimal" placeholder="149.90" />
+    </label>
+    <button type="submit" [disabled]="form.invalid">Crear</button>
+  </form>
+</section>
+
+<section class="card">
+  <header class="list-header">
+    <h2>
+      Pedidos <span class="count">{{ total() }}</span>
+    </h2>
+    <label>
+      Estado
+      <select #statusFilter (change)="setFilter(statusFilter.value)" data-testid="status-filter">
+        <option value="">Todos</option>
+        @for (s of statuses; track s) {
+          <option [value]="s">{{ labels[s] }}</option>
+        }
+      </select>
+    </label>
+  </header>
+
+  @if (error(); as message) {
+    <p class="error" role="alert">{{ message }}</p>
+  }
+
+  @if (orders().length === 0 && !loading()) {
+    <p class="empty">No hay pedidos{{ filter() ? ' en este estado' : '' }}.</p>
+  } @else {
+    <table>
+      <thead>
+        <tr>
+          <th>Cliente</th>
+          <th>Importe</th>
+          <th>Estado</th>
+          <th>Creado</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (order of orders(); track order.id) {
+          <tr>
+            <td>
+              <strong>{{ order.customer_name }}</strong
+              ><br />
+              <small>{{ order.customer_email }}</small>
+            </td>
+            <td class="num">
+              {{ order.total_amount | currency: order.currency : 'symbol' : '1.2-2' : 'es' }}
+            </td>
+            <td>
+              <span class="badge" [class]="'badge ' + order.status">{{
+                labels[order.status]
+              }}</span>
+            </td>
+            <td>{{ order.created_at | date: 'short' : undefined : 'es' }}</td>
+            <td>
+              <div class="actions">
+                @for (target of transitionsFor(order); track target) {
+                  <button
+                    type="button"
+                    (click)="move(order, target)"
+                    [attr.data-testid]="'to-' + target"
+                    [class.danger]="target === 'cancelled'"
+                  >
+                    {{ actions[target] }}
+                  </button>
+                }
+              </div>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  }
+</section>
