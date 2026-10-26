@@ -1,6 +1,6 @@
 [project]
 name = "meridian-orders-backend"
-version = "0.1.0" # la gestiona release-please (una sola versión para todo el producto)
+dynamic = ["version"] # se lee de src/meridian_orders/__init__.py, que actualiza release-please
 description = "API de Meridian Orders (FastAPI)"
 readme = "README.md"
 requires-python = ">=3.14"
@@ -26,6 +26,9 @@ dev = [
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
+
+[tool.hatch.version]
+path = "src/meridian_orders/__init__.py"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/meridian_orders"]
