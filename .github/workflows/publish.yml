@@ -34,6 +34,7 @@ jobs:
       contents: read
       packages: write # subir a GHCR
       id-token: write # cosign keyless: identidad OIDC del workflow ante Sigstore
+      pull-requests: read # linaje: PR que originó el commit
     strategy:
       fail-fast: false
       matrix:
@@ -105,6 +106,37 @@ jobs:
             echo "| Digest | \`$DIGEST\` |"
             echo "| Firma | cosign keyless ✅ |"
           } >> "$GITHUB_STEP_SUMMARY"
+      # Linaje (F3.4b · ADR 0020): lo que solo sabe este pipeline. La firma NO se declara aquí:
+      # la verifica la plataforma al registrar el build (port-lineage en platform-gitops).
+      - id: lineage
+        name: Linaje · datos del build
+        env:
+          GH_TOKEN: ${{ github.token }}
+          APP: ${{ matrix.app }}
+          IMAGE: ${{ env.IMAGE_PREFIX }}-${{ matrix.app }}
+          DIGEST: ${{ steps.build.outputs.digest }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          pr="$(gh api "repos/$GITHUB_REPOSITORY/commits/$GITHUB_SHA/pulls" --jq '.[0].number // empty' 2>/dev/null || true)"
+          json="$(jq -nc --arg app "$APP" --arg img "$IMAGE" --arg digest "$DIGEST" --arg sha "$GITHUB_SHA" \
+            --arg run "$RUN_URL" --arg now "$(date -u +%Y-%m-%dT%H:%M:%SZ)" --arg pr "$pr" '
+            {identifier: ("meridian-orders-" + $app + "-" + ($digest | ltrimstr("sha256:"))),
+             title: ($app + " sha-" + $sha[0:7]),
+             properties: {image: ($img + "@" + $digest), tag: ("sha-" + $sha[0:7]), component: $app,
+                          commit: $sha, built_at: $now, workflow_run_url: $run,
+                          sbom: true, provenance: true,
+                          critical_cves: 0},
+             relations: ({service: "meridian-orders"} + (if $pr != "" then {pull_request: ("meridian-orders-" + $pr)} else {} end))}')"
+          echo "json=$json" >> "$GITHUB_OUTPUT"
+      # critical_cves = 0: Grype ya ha bloqueado el build si había alguna CRITICAL con corrección
+      - name: Linaje · registrar el build en Port
+        uses: elpalmeral-org/platform-gitops/.github/actions/port-entity@534fb6e86846c5e9b13230090115906dfaf96a79 # main · F3.4a
+        with:
+          blueprint: build
+          entities: ${{ steps.lineage.outputs.json }}
+          client-id: ${{ secrets.PORT_CLIENT_ID }}
+          client-secret: ${{ secrets.PORT_CLIENT_SECRET }}
+          create-missing-related: "true" # el PR puede llegar a Port después (GitHub Ocean)
 
   release:
     name: etiquetar release · ${{ matrix.app }}
@@ -155,6 +187,35 @@ jobs:
             echo "### ${{ matrix.app }} → $version"
             echo "Mismo digest que \`$source_tag\`: \`$digest\` (firma verificada)"
           } >> "$GITHUB_STEP_SUMMARY"
+
+  # Linaje de la release: enlaza la release (que crea GitHub Ocean) con los dos builds re-etiquetados
+  release-lineage:
+    name: linaje · release
+    needs: release
+    if: github.event_name == 'release'
+    runs-on: ubuntu-latest
+    permissions: {}
+    steps:
+      - id: lineage
+        env:
+          TAG_NAME: ${{ github.event.release.tag_name }}
+        run: |
+          version="${TAG_NAME#v}"
+          builds="[]"
+          for app in backend frontend; do
+            digest="$(docker buildx imagetools inspect "$IMAGE_PREFIX-$app:$version" --format '{{json .Manifest}}' | jq -r .digest)"
+            builds="$(jq -c --arg b "meridian-orders-$app-${digest#sha256:}" '. + [$b]' <<<"$builds")"
+          done
+          json="$(jq -nc --arg id "meridian-orders-$TAG_NAME" --arg v "$version" --argjson b "$builds" \
+            '{identifier: $id, properties: {version: $v}, relations: {service: "meridian-orders", builds: $b}}')"
+          echo "json=$json" >> "$GITHUB_OUTPUT"
+      - uses: elpalmeral-org/platform-gitops/.github/actions/port-entity@534fb6e86846c5e9b13230090115906dfaf96a79 # main · F3.4a
+        with:
+          blueprint: release
+          entities: ${{ steps.lineage.outputs.json }}
+          client-id: ${{ secrets.PORT_CLIENT_ID }}
+          client-secret: ${{ secrets.PORT_CLIENT_SECRET }}
+          create-missing-related: "true"
 
   dev:
     name: promocionar
