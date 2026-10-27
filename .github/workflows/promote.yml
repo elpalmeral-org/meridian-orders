@@ -1,0 +1,26 @@
+# Promoción a prod, a mano. Solo acepta una versión que YA esté en staging (lo comprueban el
+# script de la plataforma y el check gitops-ok). Dos puertas humanas: aprobar el entorno "prod"
+# aquí y fusionar el PR en platform-gitops.
+name: promote
+run-name: prod ← ${{ inputs.version }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Versión X.Y.Z a llevar a prod (debe estar ya en staging)
+        type: string
+        required: true
+
+permissions: {}
+
+jobs:
+  prod:
+    name: promocionar
+    permissions: {}
+    uses: ./.github/workflows/_promote.yml
+    with:
+      environment: prod
+      tag: ${{ inputs.version }}
+    secrets:
+      PLATFORM_BOT_PRIVATE_KEY: ${{ secrets.PLATFORM_BOT_PRIVATE_KEY }}

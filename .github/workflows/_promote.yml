@@ -1,0 +1,78 @@
+# Promoción a un entorno (workflow reutilizable). La lanzan publish.yml (dev y staging) y
+# promote.yml (prod). NO despliega: abre un PR en platform-gitops con
+# scripts/promote-meridian.sh, que es de la plataforma; Argo CD despliega al fusionarlo.
+#
+#   dev      tag sha-<commit> (por defecto, el commit que lo lanza) · auto-merge tras gitops-ok
+#   staging  tag X.Y.Z de la release · PR que fusiona una persona
+#   prod     tag X.Y.Z ya en staging · entorno con aprobación + PR que fusiona una persona
+name: _promote
+
+on:
+  workflow_call:
+    inputs:
+      environment:
+        type: string
+        required: true
+      tag:
+        type: string
+        required: false
+        default: ""
+      auto-merge:
+        type: boolean
+        required: false
+        default: false
+    secrets:
+      PLATFORM_BOT_PRIVATE_KEY:
+        required: true
+
+permissions: {}
+
+jobs:
+  promote:
+    name: ${{ inputs.environment }}
+    runs-on: ubuntu-latest
+    environment:
+      name: ${{ inputs.environment }}
+      # Enlace en la página de despliegues; el dominio va en una variable para no fijarlo aquí (ADR 0010)
+      url: ${{ vars.LAB_APPS_DOMAIN != '' && format('https://{0}.{1}', inputs.environment == 'prod' && 'orders' || format('orders-{0}', inputs.environment), vars.LAB_APPS_DOMAIN) || '' }}
+    concurrency:
+      group: promote-${{ inputs.environment }}
+      cancel-in-progress: false
+    steps:
+      - id: app
+        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
+        with:
+          client-id: ${{ vars.PLATFORM_BOT_CLIENT_ID }}
+          private-key: ${{ secrets.PLATFORM_BOT_PRIVATE_KEY }}
+          # Token mínimo: solo platform-gitops, solo para crear ramas y PR
+          owner: elpalmeral-org
+          repositories: platform-gitops
+          permission-contents: write
+          permission-pull-requests: write
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: elpalmeral-org/platform-gitops
+          token: ${{ steps.app.outputs.token }}
+          persist-credentials: false
+      - name: Git como el bot
+        env:
+          GH_TOKEN: ${{ steps.app.outputs.token }}
+          APP_SLUG: ${{ steps.app.outputs.app-slug }}
+        run: |
+          id="$(gh api "/users/${APP_SLUG}%5Bbot%5D" --jq .id)"
+          git config user.name "${APP_SLUG}[bot]"
+          git config user.email "${id}+${APP_SLUG}[bot]@users.noreply.github.com"
+          # El token no se guarda en .git/config: el helper lo lee de GH_TOKEN en cada push
+          # shellcheck disable=SC2016 # comillas simples a propósito: se expande al hacer push
+          git config credential.helper '!f() { echo username=x-access-token; echo "password=${GH_TOKEN}"; }; f'
+      - name: Abrir el PR de promoción
+        env:
+          GH_TOKEN: ${{ steps.app.outputs.token }}
+          ENVIRONMENT: ${{ inputs.environment }}
+          TAG: ${{ inputs.tag }}
+          AUTO_MERGE: ${{ inputs.auto-merge && '--merge' || '' }}
+        run: |
+          tag="${TAG:-sha-${GITHUB_SHA::7}}"
+          tag="${tag#v}" # release-please etiqueta vX.Y.Z; las imágenes son X.Y.Z
+          # shellcheck disable=SC2086 # AUTO_MERGE vacío = sin argumento
+          scripts/promote-meridian.sh "$ENVIRONMENT" "$tag" $AUTO_MERGE

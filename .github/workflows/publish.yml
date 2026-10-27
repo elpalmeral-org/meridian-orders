@@ -1,10 +1,13 @@
-# Publicación de imágenes (F2.3 del agentic-platform-lab).
+# Publicación de imágenes y entrega continua (F2.3 y F2.4 del agentic-platform-lab).
 #
 #  · push a main  → construye back y front, sube a GHCR (sha-<commit>) con SBOM y procedencia,
 #                   analiza con Grype (falla con CRITICAL corregibles) y firma el digest con cosign
 #                   keyless. Siempre se publican las dos: cada commit de main tiene su pareja de imágenes.
+#                   Después → PR a dev en platform-gitops que se fusiona solo si pasa gitops-ok.
 #  · release      → NO reconstruye: re-etiqueta como X.Y.Z el MISMO digest de sha-<commit del tag>
 #                   ("build once"). Staging y prod usarán exactamente lo que se probó en dev.
+#                   Después → PR a staging en platform-gitops, que fusiona una persona.
+#  · prod         → workflow promote.yml (a mano, con aprobación).
 name: publish
 
 on:
@@ -142,3 +145,27 @@ jobs:
             echo "### ${{ matrix.app }} → $version"
             echo "Mismo digest que \`$source_tag\`: \`$digest\` (firma verificada)"
           } >> "$GITHUB_STEP_SUMMARY"
+
+  dev:
+    name: promocionar
+    needs: build
+    if: github.event_name == 'push'
+    permissions: {}
+    uses: ./.github/workflows/_promote.yml
+    with:
+      environment: dev
+      auto-merge: true
+    secrets:
+      PLATFORM_BOT_PRIVATE_KEY: ${{ secrets.PLATFORM_BOT_PRIVATE_KEY }}
+
+  staging:
+    name: promocionar
+    needs: release
+    if: github.event_name == 'release'
+    permissions: {}
+    uses: ./.github/workflows/_promote.yml
+    with:
+      environment: staging
+      tag: ${{ github.event.release.tag_name }}
+    secrets:
+      PLATFORM_BOT_PRIVATE_KEY: ${{ secrets.PLATFORM_BOT_PRIVATE_KEY }}
