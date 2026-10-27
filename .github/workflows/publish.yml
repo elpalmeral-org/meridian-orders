@@ -79,7 +79,15 @@ jobs:
       - name: Firmar el digest (cosign keyless)
         env:
           IMAGE: ${{ env.IMAGE_PREFIX }}-${{ matrix.app }}@${{ steps.build.outputs.digest }}
-        run: cosign sign --yes "$IMAGE"
+        # El servicio de tokens OIDC de GitHub responde a veces con un error transitorio en texto
+        # ("upstream connect error…") y cosign falla con "invalid character 'u'". 3 intentos.
+        run: |
+          for i in 1 2 3; do
+            if cosign sign --yes "$IMAGE"; then exit 0; fi
+            echo "::warning::cosign sign falló (intento $i/3); reintento en $((i * 15)) s"
+            sleep $((i * 15))
+          done
+          exit 1
       - name: Resumen
         env:
           APP: ${{ matrix.app }}
