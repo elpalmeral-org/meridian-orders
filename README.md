@@ -112,5 +112,19 @@ Trunk-based: rama corta → PR con título [Conventional Commits](https://www.co
 release-please y se promocionan a staging y prod por PR en
 [`platform-gitops`](https://github.com/elpalmeral-org/platform-gitops).
 
+## Entrega continua
+
+Este repo **no despliega**: pide el despliegue abriendo un PR en `platform-gitops`, y la plataforma
+lo acepta o lo rechaza con su check `gitops-ok`.
+
+| Entorno | Qué llega | Cómo |
+|---|---|---|
+| dev | `sha-<commit>` | automático en cada merge en `main` (`publish.yml`), con auto-merge |
+| staging | `X.Y.Z` | automático en cada release; el PR lo fusiona una persona |
+| prod | `X.Y.Z` ya en staging | Actions → **promote** → `prod` → aprobar el entorno → fusionar el PR |
+
+`promote` también admite `staging` para re-promocionar una release. Detalle y reglas:
+[CI/CD del lab](https://github.com/elpalmeral-org/agentic-platform-lab/blob/main/docs/lab/ci-cd.md).
+
 > **Fuera de alcance a propósito:** la puntuación de riesgo de pedidos. Es la primera feature que
 > construirá un agente mediante AIDLC (fase 5 del lab), de la spec al despliegue.
