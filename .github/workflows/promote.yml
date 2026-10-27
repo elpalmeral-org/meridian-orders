@@ -1,0 +1,32 @@
+# Promoción manual. prod es el caso normal; staging sirve para re-promocionar una release
+# (p. ej. si falló el CD automático). Solo admite una versión X.Y.Z ya publicada y, para prod,
+# que YA esté en staging (lo comprueban el script de la plataforma y el check gitops-ok).
+# prod tiene dos puertas humanas: aprobar el entorno "prod" aquí y fusionar el PR en platform-gitops.
+name: promote
+run-name: ${{ inputs.environment }} ← ${{ inputs.version }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: Entorno destino
+        type: choice
+        options: [prod, staging]
+        default: prod
+      version:
+        description: Versión X.Y.Z (para prod, debe estar ya en staging)
+        type: string
+        required: true
+
+permissions: {}
+
+jobs:
+  promote:
+    name: promocionar
+    permissions: {}
+    uses: ./.github/workflows/_promote.yml
+    with:
+      environment: ${{ inputs.environment }}
+      tag: ${{ inputs.version }}
+    secrets:
+      PLATFORM_BOT_PRIVATE_KEY: ${{ secrets.PLATFORM_BOT_PRIVATE_KEY }}

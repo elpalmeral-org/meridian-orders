@@ -1,10 +1,13 @@
-# Publicación de imágenes (F2.3 del agentic-platform-lab).
+# Publicación de imágenes y entrega continua (F2.3 y F2.4 del agentic-platform-lab).
 #
 #  · push a main  → construye back y front, sube a GHCR (sha-<commit>) con SBOM y procedencia,
 #                   analiza con Grype (falla con CRITICAL corregibles) y firma el digest con cosign
 #                   keyless. Siempre se publican las dos: cada commit de main tiene su pareja de imágenes.
+#                   Después → PR a dev en platform-gitops que se fusiona solo si pasa gitops-ok.
 #  · release      → NO reconstruye: re-etiqueta como X.Y.Z el MISMO digest de sha-<commit del tag>
 #                   ("build once"). Staging y prod usarán exactamente lo que se probó en dev.
+#                   Después → PR a staging en platform-gitops, que fusiona una persona.
+#  · prod         → workflow promote.yml (a mano, con aprobación).
 name: publish
 
 on:
@@ -122,23 +125,49 @@ jobs:
         run: |
           version="${TAG_NAME#v}"
           source_tag="sha-${GITHUB_SHA::7}"
-          # La release se crea justo tras el merge del PR de release: el build de ese commit
-          # puede estar aún en marcha. Esperamos hasta 20 min a que exista sha-<commit>.
+          identity="https://github.com/$REPO/.github/workflows/publish.yml@refs/heads/main"
+          # La release se crea justo tras el merge del PR de release, y el build de ese commit
+          # puede estar en cola o en marcha. Ojo: el tag sha-<commit> aparece en GHCR ANTES de la
+          # firma (entre medias va Grype), así que no basta con que exista: esperamos hasta 20 min
+          # a que exista Y esté firmado por publish.yml en main. Solo eso se promociona.
+          digest=""
           for _ in $(seq 1 40); do
-            if digest=$(docker buildx imagetools inspect "$IMAGE:$source_tag" --format '{{json .Manifest}}' 2>/dev/null | jq -er .digest); then
+            if d=$(docker buildx imagetools inspect "$IMAGE:$source_tag" --format '{{json .Manifest}}' 2>/dev/null | jq -er .digest) \
+              && cosign verify "$IMAGE@$d" --certificate-identity "$identity" \
+                   --certificate-oidc-issuer https://token.actions.githubusercontent.com > /dev/null 2>&1; then
+              digest="$d"
               break
             fi
-            echo "esperando a $IMAGE:$source_tag…"; sleep 30
+            echo "esperando a $IMAGE:$source_tag firmada…"; sleep 30
           done
-          [ -n "${digest:-}" ] || { echo "::error::No existe $IMAGE:$source_tag"; exit 1; }
-
-          # Solo se promociona lo que firmó el workflow de publicación de main
-          cosign verify "$IMAGE@$digest" \
-            --certificate-identity "https://github.com/$REPO/.github/workflows/publish.yml@refs/heads/main" \
-            --certificate-oidc-issuer https://token.actions.githubusercontent.com > /dev/null
+          [ -n "$digest" ] || { echo "::error::$IMAGE:$source_tag no existe o no está firmada por publish.yml en main"; exit 1; }
 
           docker buildx imagetools create --tag "$IMAGE:$version" "$IMAGE@$digest"
           {
             echo "### ${{ matrix.app }} → $version"
             echo "Mismo digest que \`$source_tag\`: \`$digest\` (firma verificada)"
           } >> "$GITHUB_STEP_SUMMARY"
+
+  dev:
+    name: promocionar
+    needs: build
+    if: github.event_name == 'push'
+    permissions: {}
+    uses: ./.github/workflows/_promote.yml
+    with:
+      environment: dev
+      auto-merge: true
+    secrets:
+      PLATFORM_BOT_PRIVATE_KEY: ${{ secrets.PLATFORM_BOT_PRIVATE_KEY }}
+
+  staging:
+    name: promocionar
+    needs: release
+    if: github.event_name == 'release'
+    permissions: {}
+    uses: ./.github/workflows/_promote.yml
+    with:
+      environment: staging
+      tag: ${{ github.event.release.tag_name }}
+    secrets:
+      PLATFORM_BOT_PRIVATE_KEY: ${{ secrets.PLATFORM_BOT_PRIVATE_KEY }}
