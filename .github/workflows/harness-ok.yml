@@ -1,10 +1,16 @@
 # Puerta de la plataforma (F4.3, ADR 0023): evalúa policy/opa/pr_gates.rego de platform-harness
 # contra este PR. Construye el "input" que documenta la cabecera de ese fichero: checks (apm-audit,
 # harness-signature, openspec), harness.version (de apm.lock.yaml) y metadatos del PR.
+#
+# Al fusionar en main (F4.8), un job aparte publica el estado del harness en Port
+# (harness_status, ADR 0020): la misma comprobación de apm audit y firma, para el estado "en
+# vivo" del servicio, no solo para la puerta del PR.
 name: harness-ok
 
 on:
   pull_request:
+  push:
+    branches: [main]
 
 permissions:
   contents: read
@@ -17,6 +23,7 @@ concurrency:
 jobs:
   harness-ok:
     name: harness-ok
+    if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -132,3 +139,101 @@ jobs:
             -f pretty 'data.meridian.pr_gates' | tee result.json
           opa eval -i input.json -d apm_modules/elpalmeral-org/platform-harness/policy/opa \
             --format raw 'data.meridian.pr_gates.allow' | grep -q true
+
+  harness-status-port:
+    name: estado del harness → Port
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: apm-cli 0.35.0 (pip, aislado con pipx)
+        run: pipx install apm-cli==0.35.0
+
+      - name: apm install --frozen (sin resolver nada nuevo)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: apm install --frozen
+
+      - name: apm audit --ci (drift del harness)
+        id: audit
+        run: |
+          if apm audit --ci; then
+            echo "result=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "result=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: sigstore/cosign-installer@756fe2d284c7292c4e9b62c8a28f1e5629c59532 # v4.1.3
+
+      - name: Firma de la release fijada en apm.lock.yaml
+        id: signature
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          version="$(yq -r '.dependencies[] | select(.name == "platform-harness") | .version' apm.lock.yaml)"
+          commit="$(yq -r '.dependencies[] | select(.name == "platform-harness") | .resolved_commit' apm.lock.yaml)"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          tag="harness-v$version"
+          dir="$(mktemp -d)"
+          if ! gh release download "$tag" --repo elpalmeral-org/platform-harness --dir "$dir"; then
+            echo "result=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          manifest_commit="$(jq -r '.commit' "$dir/manifest.json")"
+          if [ "$manifest_commit" != "$commit" ]; then
+            echo "result=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          archive="$(jq -r '.archive' "$dir/manifest.json")"
+          signature="$(jq -r '.signature' "$dir/manifest.json")"
+          if cosign verify-blob --bundle "$dir/$signature" \
+              --certificate-identity-regexp 'https://github.com/elpalmeral-org/platform-harness/.github/workflows/release.yml@.*' \
+              --certificate-oidc-issuer https://token.actions.githubusercontent.com \
+              "$dir/$archive"; then
+            echo "result=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "result=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: open-policy-agent/setup-opa@34a30e8a924d1b03ce2cf7abe97250bbb1f332b5 # v2.2.0
+        with:
+          version: latest
+
+      - name: Versión mínima (minimum_harness_version de pr_gates.rego)
+        id: min_version
+        run: |
+          minimum="$(opa eval -d apm_modules/elpalmeral-org/platform-harness/policy/opa \
+            --format raw 'data.meridian.pr_gates.minimum_harness_version')"
+          version="${{ steps.signature.outputs.version }}"
+          if [ "$(printf '%s\n%s\n' "$minimum" "$version" | sort -V | head -1)" = "$minimum" ]; then
+            echo "result=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "result=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Publicar en Port (harness_status)
+        id: entity
+        run: |
+          jq -nc --arg version "${{ steps.signature.outputs.version }}" \
+            --arg now "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+            --argjson audit_ok "${{ steps.audit.outputs.result }}" \
+            --argjson signature_ok "${{ steps.signature.outputs.result }}" \
+            --argjson min_version_ok "${{ steps.min_version.outputs.result }}" \
+            '{identifier: "meridian-orders",
+              properties: {version: $version, checked_at: $now, audit_ok: $audit_ok,
+                            signature_ok: $signature_ok, min_version_ok: $min_version_ok},
+              relations: {service: "meridian-orders"}}' > /tmp/entity.json
+          echo "json=$(cat /tmp/entity.json)" >> "$GITHUB_OUTPUT"
+
+      - uses: elpalmeral-org/platform-gitops/.github/actions/port-entity@534fb6e86846c5e9b13230090115906dfaf96a79 # main · F3.4a
+        with:
+          blueprint: harness_status
+          entities: ${{ steps.entity.outputs.json }}
+          client-id: ${{ secrets.PORT_CLIENT_ID }}
+          client-secret: ${{ secrets.PORT_CLIENT_SECRET }}
+          create-missing-related: "true"
