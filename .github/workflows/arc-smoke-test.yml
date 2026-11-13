@@ -18,8 +18,3 @@ jobs:
           echo "runner efímero de ARC, de verdad: $(hostname)"
           id
           uname -a
-      - name: Alcance de HarnessRouter desde el runner (solo lectura, sin spend)
-        run: |
-          curl -sv --max-time 10 http://harnessrouter.harnessrouter.svc.cluster.local:3000/v1/harnesses 2>&1 || true
-          echo "---"
-          curl -sv --max-time 10 http://harnessrouter.harnessrouter.svc.cluster.local:3000/ 2>&1 || true
