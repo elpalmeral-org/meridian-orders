@@ -1,0 +1,120 @@
+# PR automático de upgrade del harness corporativo (F4.4, ADR 0029). Por sondeo (no por
+# repository_dispatch desde platform-harness): este repo comprueba por su cuenta si hay una
+# release más nueva que la que tiene fijada en apm.lock.yaml. Abre el PR con el token de la
+# GitHub App (elpalmeral-platform-bot[bot]) para que pr_gates.rego lo reconozca como
+# harness_upgrade_pr; una persona lo revisa y fusiona igual que cualquier otro PR.
+name: harness-upgrade
+
+on:
+  schedule:
+    - cron: "17 6 * * *"
+  workflow_dispatch: {}
+
+permissions: {}
+
+concurrency:
+  group: harness-upgrade
+  cancel-in-progress: false
+
+jobs:
+  harness-upgrade:
+    runs-on: ubuntu-latest
+    steps:
+      - id: app
+        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
+        with:
+          client-id: ${{ vars.PLATFORM_BOT_CLIENT_ID }}
+          private-key: ${{ secrets.PLATFORM_BOT_PRIVATE_KEY }}
+          # Token mínimo: solo este repo, solo para abrir el PR de upgrade
+          owner: elpalmeral-org
+          repositories: meridian-orders
+          permission-contents: write
+          permission-pull-requests: write
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          token: ${{ steps.app.outputs.token }}
+          persist-credentials: false
+
+      - name: ¿Hay una release más nueva que la fijada?
+        id: check
+        env:
+          GH_TOKEN: ${{ steps.app.outputs.token }}
+        run: |
+          current="$(yq -r '.dependencies[] | select(.name == "platform-harness") | .version' apm.lock.yaml)"
+          latest_tag="$(gh api repos/elpalmeral-org/platform-harness/releases/latest --jq .tag_name)"
+          latest="${latest_tag#harness-v}"
+          echo "current=$current" >> "$GITHUB_OUTPUT"
+          echo "latest=$latest" >> "$GITHUB_OUTPUT"
+          echo "latest_tag=$latest_tag" >> "$GITHUB_OUTPUT"
+          if [ "$current" = "$latest" ]; then
+            echo "needed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "needed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: ¿Ya hay un PR de upgrade abierto?
+        id: existing
+        if: steps.check.outputs.needed == 'true'
+        env:
+          GH_TOKEN: ${{ steps.app.outputs.token }}
+        run: |
+          n="$(gh pr list --state open --label harness-upgrade --json number --jq length)"
+          echo "open=$n" >> "$GITHUB_OUTPUT"
+
+      - name: SHA del tag nuevo
+        id: sha
+        if: steps.check.outputs.needed == 'true' && steps.existing.outputs.open == '0'
+        env:
+          GH_TOKEN: ${{ steps.app.outputs.token }}
+        run: |
+          sha="$(gh api repos/elpalmeral-org/platform-harness/git/ref/tags/${{ steps.check.outputs.latest_tag }} --jq .object.sha)"
+          echo "sha=$sha" >> "$GITHUB_OUTPUT"
+
+      - name: Actualizar el pin en apm.yml
+        if: steps.check.outputs.needed == 'true' && steps.existing.outputs.open == '0'
+        run: |
+          sed -i -E "s|elpalmeral-org/platform-harness#[0-9a-f]{40} # harness-v[0-9.]+|elpalmeral-org/platform-harness#${{ steps.sha.outputs.sha }} # ${{ steps.check.outputs.latest_tag }}|" apm.yml
+
+      - name: apm-cli 0.35.0 (pip, aislado con pipx)
+        if: steps.check.outputs.needed == 'true' && steps.existing.outputs.open == '0'
+        run: pipx install apm-cli==0.35.0
+
+      - name: apm install + apm compile
+        if: steps.check.outputs.needed == 'true' && steps.existing.outputs.open == '0'
+        env:
+          GH_TOKEN: ${{ steps.app.outputs.token }}
+        run: |
+          rm -rf apm_modules
+          apm install
+          apm compile
+
+      - name: Git como el bot
+        if: steps.check.outputs.needed == 'true' && steps.existing.outputs.open == '0'
+        env:
+          GH_TOKEN: ${{ steps.app.outputs.token }}
+          APP_SLUG: ${{ steps.app.outputs.app-slug }}
+        run: |
+          id="$(gh api "/users/${APP_SLUG}%5Bbot%5D" --jq .id)"
+          git config user.name "${APP_SLUG}[bot]"
+          git config user.email "${id}+${APP_SLUG}[bot]@users.noreply.github.com"
+          # El token no se guarda en .git/config: el helper lo lee de GH_TOKEN en cada push
+          # shellcheck disable=SC2016
+          git config credential.helper '!f() { echo username=x-access-token; echo "password=${GH_TOKEN}"; }; f'
+
+      - name: Commit y PR
+        if: steps.check.outputs.needed == 'true' && steps.existing.outputs.open == '0'
+        env:
+          GH_TOKEN: ${{ steps.app.outputs.token }}
+          CURRENT: ${{ steps.check.outputs.current }}
+          LATEST: ${{ steps.check.outputs.latest }}
+          LATEST_TAG: ${{ steps.check.outputs.latest_tag }}
+        run: |
+          branch="chore/harness-upgrade-${LATEST}"
+          git switch -c "$branch"
+          git add -A
+          git commit -m "chore(harness): upgrade ${CURRENT} -> ${LATEST}"
+          git push -u origin "$branch"
+          gh pr create --title "chore(harness): upgrade ${CURRENT} -> ${LATEST}" \
+            --body "Sube el harness corporativo de \`${CURRENT}\` a \`${LATEST}\` (\`${LATEST_TAG}\`). Generado por \`harness-upgrade.yml\` ([ADR 0029](https://github.com/elpalmeral-org/agentic-platform-lab/blob/main/docs/adr/0029-pr-automatico-upgrade-harness.md))." \
+            --label harness-upgrade
