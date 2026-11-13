@@ -1,0 +1,20 @@
+# Prueba de humo de ARC (F5, ADR 0031): confirma que el runner scale set "arc-aidlc" registra un
+# runner efímero de verdad y ejecuta un job. Disparo manual a propósito: no corre en cada PR/push.
+# Los workflows reales (aidlc-propose/aidlc-implement, que llaman a HarnessRouter) llegan cuando
+# F4.7 publique los roles y conecte proveedores.
+name: arc-smoke-test
+
+on:
+  workflow_dispatch: {}
+
+permissions: {}
+
+jobs:
+  smoke-test:
+    name: smoke test en arc-aidlc
+    runs-on: arc-aidlc
+    steps:
+      - run: |
+          echo "runner efímero de ARC, de verdad: $(hostname)"
+          id
+          uname -a
