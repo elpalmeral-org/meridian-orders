@@ -16,11 +16,18 @@ class Base(DeclarativeBase):
 
 @lru_cache
 def get_engine() -> Engine:
+    # hide_parameters: si una consulta falla, SQLAlchemy no mete los valores de los parámetros
+    # (p. ej. customer_email, dato C3) en el mensaje de la excepción (clasificación de datos §2).
     url = normalize_database_url(get_settings().database_url)
     if url.startswith("sqlite") and ":memory:" in url:
         # Una única conexión compartida: la base en memoria sobrevive entre peticiones.
-        return create_engine(url, connect_args={"check_same_thread": False}, poolclass=StaticPool)
-    return create_engine(url, pool_pre_ping=True)
+        return create_engine(
+            url,
+            connect_args={"check_same_thread": False},
+            poolclass=StaticPool,
+            hide_parameters=True,
+        )
+    return create_engine(url, pool_pre_ping=True, hide_parameters=True)
 
 
 @lru_cache

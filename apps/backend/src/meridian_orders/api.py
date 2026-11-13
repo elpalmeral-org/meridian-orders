@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 from meridian_orders import service
 from meridian_orders.db import get_session
 from meridian_orders.models import OrderStatus
-from meridian_orders.schemas import OrderCreate, OrderList, OrderRead, OrderStatusUpdate
+from meridian_orders.schemas import Email, OrderCreate, OrderList, OrderRead, OrderStatusUpdate
 
 router = APIRouter(prefix="/api/orders", tags=["orders"])
 SessionDep = Annotated[Session, Depends(get_session)]
@@ -19,10 +19,11 @@ SessionDep = Annotated[Session, Depends(get_session)]
 def list_orders(
     session: SessionDep,
     status_filter: Annotated[OrderStatus | None, Query(alias="status")] = None,
+    customer_email: Annotated[Email | None, Query()] = None,
     limit: Annotated[int, Query(ge=1, le=100)] = 50,
     offset: Annotated[int, Query(ge=0)] = 0,
 ) -> OrderList:
-    items, total = service.list_orders(session, status_filter, limit, offset)
+    items, total = service.list_orders(session, status_filter, customer_email, limit, offset)
     return OrderList(items=[OrderRead.model_validate(o) for o in items], total=total)
 
 
