@@ -6,7 +6,7 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from meridian_orders.models import Order, OrderStatus
-from meridian_orders.schemas import OrderCreate
+from meridian_orders.schemas import Email, OrderCreate
 
 # Máquina de estados: qué transiciones están permitidas desde cada estado.
 ALLOWED_TRANSITIONS: dict[OrderStatus, frozenset[OrderStatus]] = {
@@ -37,13 +37,20 @@ def create_order(session: Session, data: OrderCreate) -> Order:
 
 
 def list_orders(
-    session: Session, status: OrderStatus | None, limit: int, offset: int
+    session: Session,
+    status: OrderStatus | None,
+    customer_email: Email | None,
+    limit: int,
+    offset: int,
 ) -> tuple[list[Order], int]:
     query = select(Order)
     count = select(func.count()).select_from(Order)
     if status is not None:
         query = query.where(Order.status == status)
         count = count.where(Order.status == status)
+    if customer_email is not None:
+        query = query.where(func.lower(Order.customer_email) == customer_email.lower())
+        count = count.where(func.lower(Order.customer_email) == customer_email.lower())
     query = query.order_by(Order.created_at.desc()).limit(limit).offset(offset)
     return list(session.scalars(query)), session.scalar(count) or 0
 

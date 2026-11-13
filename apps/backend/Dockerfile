@@ -31,4 +31,7 @@ ENV PATH="/app/.venv/bin:${PATH}" \
 USER 10001
 EXPOSE 8000
 # Migraciones: el Job de Argo CD (hook PreSync) ejecuta "alembic upgrade head" con esta misma imagen.
-CMD ["uvicorn", "meridian_orders.main:app", "--host", "0.0.0.0", "--port", "8000", "--proxy-headers", "--forwarded-allow-ips", "*"]
+# --no-access-log: el log de acceso registraría la query string cruda (p. ej. customer_email, dato
+# C3, corpus/03-data-classification.md §2); meridian_http_requests_total ya cubre la observabilidad
+# de petición (método, ruta sin query string, estado) sin ese dato.
+CMD ["uvicorn", "meridian_orders.main:app", "--host", "0.0.0.0", "--port", "8000", "--proxy-headers", "--forwarded-allow-ips", "*", "--no-access-log"]

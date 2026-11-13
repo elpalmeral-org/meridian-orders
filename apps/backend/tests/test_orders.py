@@ -72,6 +72,36 @@ def test_list_orders_filters_by_status_and_paginates(client: TestClient) -> None
     assert page["total"] == 2
 
 
+def test_list_orders_filters_by_customer_email(client: TestClient) -> None:
+    acme = create(client)
+    create(client, customer_name="Beta SL", customer_email="pedidos@beta.example")
+
+    matched = client.get("/api/orders", params={"customer_email": "COMPRAS@ACME.EXAMPLE"}).json()
+    assert matched["total"] == 1
+    assert matched["items"][0]["id"] == acme["id"]
+
+    none_matched = client.get(
+        "/api/orders", params={"customer_email": "nadie@ejemplo.example"}
+    ).json()
+    assert none_matched["total"] == 0
+    assert none_matched["items"] == []
+
+    client.patch(f"/api/orders/{acme['id']}/status", json={"status": "confirmed"})
+    combined = client.get(
+        "/api/orders", params={"customer_email": "compras@acme.example", "status": "confirmed"}
+    ).json()
+    assert combined["total"] == 1
+    combined_empty = client.get(
+        "/api/orders", params={"customer_email": "compras@acme.example", "status": "shipped"}
+    ).json()
+    assert combined_empty["total"] == 0
+
+
+def test_list_orders_rejects_invalid_customer_email_filter(client: TestClient) -> None:
+    response = client.get("/api/orders", params={"customer_email": "no-es-un-email"})
+    assert response.status_code == 422
+
+
 # Requisito: ciclo de vida del pedido
 @pytest.mark.parametrize(
     "path",
