@@ -29,6 +29,7 @@ jobs:
             ci
             chore
             revert
+            spec
           scopes: |
             backend
             frontend
