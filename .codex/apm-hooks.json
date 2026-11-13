@@ -1,0 +1,14 @@
+{
+  "PreToolUse": [
+    {
+      "hooks": [
+        {
+          "type": "command",
+          "command": "python3 .codex/hooks/platform-harness/scripts/block_secrets.py",
+          "timeout": 10
+        }
+      ],
+      "_apm_source": "elpalmeral-org/platform-harness"
+    }
+  ]
+}

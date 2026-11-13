@@ -1,0 +1,5 @@
+[mcp_servers.port]
+url = "https://mcp.port.io/v1"
+
+[mcp_servers.port.http_headers]
+x-read-only-mode = "1"

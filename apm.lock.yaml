@@ -1,0 +1,543 @@
+lockfile_version: '1'
+apm_version: 0.35.0
+dependencies:
+- repo_url: elpalmeral-org/platform-harness
+  name: platform-harness
+  host: github.com
+  resolved_commit: 5df5c1e1830094d033f12224fef72d20717229ab
+  resolved_ref: 5df5c1e1830094d033f12224fef72d20717229ab
+  version: 0.1.1
+  package_type: apm_package
+  deployed_files:
+  - .agents/skills/corporate-grounding
+  - .agents/skills/corporate-grounding/SKILL.md
+  - .agents/skills/corporate-grounding/references/01-engineering-standards.md
+  - .agents/skills/corporate-grounding/references/02-security-baseline.md
+  - .agents/skills/corporate-grounding/references/03-data-classification.md
+  - .claude/agents/impl-conformance.md
+  - .claude/agents/implementer.md
+  - .claude/agents/security-gate.md
+  - .claude/agents/spec-validator.md
+  - .claude/agents/spec-writer.md
+  - .claude/commands/feature.md
+  - .claude/hooks/platform-harness/scripts/block_secrets.py
+  - .claude/rules/data-classification.md
+  - .claude/rules/engineering-standards.md
+  - .claude/rules/security-baseline.md
+  - .claude/skills/corporate-grounding
+  - .claude/skills/corporate-grounding/SKILL.md
+  - .claude/skills/corporate-grounding/references/01-engineering-standards.md
+  - .claude/skills/corporate-grounding/references/02-security-baseline.md
+  - .claude/skills/corporate-grounding/references/03-data-classification.md
+  - .codex/agents/impl-conformance.toml
+  - .codex/agents/implementer.toml
+  - .codex/agents/security-gate.toml
+  - .codex/agents/spec-validator.toml
+  - .codex/agents/spec-writer.toml
+  - .codex/hooks/platform-harness/scripts/block_secrets.py
+  - .github/agents/impl-conformance.agent.md
+  - .github/agents/implementer.agent.md
+  - .github/agents/security-gate.agent.md
+  - .github/agents/spec-validator.agent.md
+  - .github/agents/spec-writer.agent.md
+  - .github/hooks/platform-harness-block-secrets.json
+  - .github/hooks/scripts/platform-harness/scripts/block_secrets.py
+  - .github/instructions/data-classification.instructions.md
+  - .github/instructions/engineering-standards.instructions.md
+  - .github/instructions/security-baseline.instructions.md
+  - .github/prompts/feature.prompt.md
+  - .opencode/agents/impl-conformance.md
+  - .opencode/agents/implementer.md
+  - .opencode/agents/security-gate.md
+  - .opencode/agents/spec-validator.md
+  - .opencode/agents/spec-writer.md
+  - .opencode/commands/feature.md
+  deployed_file_hashes:
+    .agents/skills/corporate-grounding/SKILL.md: sha256:5fde8eed9d4f5e4333a9889e30cdba60e0344acc04efd8f359701a4f1383444b
+    .agents/skills/corporate-grounding/references/01-engineering-standards.md: sha256:a45e5313d78333705a1f88fccaa3dde257d6e86187cb306ff13fc716827b057a
+    .agents/skills/corporate-grounding/references/02-security-baseline.md: sha256:bf3ec1190a3b34b97a6e1f065f5aeae4003fe6b0bffeec31eb7dd2f63c68f192
+    .agents/skills/corporate-grounding/references/03-data-classification.md: sha256:5745bb0a6b427e25ce9d3ec15f6048a158bec9b45c2ae0619f392aeb6ff297df
+    .claude/agents/impl-conformance.md: sha256:61409f9d64444871262293aa75c25683959e5312c5ff0ae1076b5e2546d12ac5
+    .claude/agents/implementer.md: sha256:11d86e8484b126d6d32d394b36e9b71e6d9f5ccb72e0464977fcf2620be5a29b
+    .claude/agents/security-gate.md: sha256:c75fcc78dba0292fc91fc248a75f62510b5befd5b81315547401e8d0ff8700bb
+    .claude/agents/spec-validator.md: sha256:0dc4511a73339f3fe093f32f74de0952104e0056e334ebb6721d814fb2b858b8
+    .claude/agents/spec-writer.md: sha256:044610a300b624e1e6493cbee059fb8f74118676f8145c8d52d116d332d12e58
+    .claude/commands/feature.md: sha256:8b4de0839d4fd2dff7cc0f304e027f0a2a1ed555de7079c4ffafd657da8860bb
+    .claude/hooks/platform-harness/scripts/block_secrets.py: sha256:fe7eb6f66053cd8791fb07ad4f8d321a9410c3316e0e99960b063de7007e0d5b
+    .claude/rules/data-classification.md: sha256:8ea8b999598f3114c3a44510641b7393cfe3d967b67f2edc4c525cd4177e36da
+    .claude/rules/engineering-standards.md: sha256:f89d11c74e225b3697b12f1f3f33b4fed145623c3418ab1b95b1d7260363e175
+    .claude/rules/security-baseline.md: sha256:211dcf2097d3d890da869b496e52c8b4b51c8102f0c41cffd0816ad6c0108d07
+    .claude/skills/corporate-grounding/SKILL.md: sha256:5fde8eed9d4f5e4333a9889e30cdba60e0344acc04efd8f359701a4f1383444b
+    .claude/skills/corporate-grounding/references/01-engineering-standards.md: sha256:a45e5313d78333705a1f88fccaa3dde257d6e86187cb306ff13fc716827b057a
+    .claude/skills/corporate-grounding/references/02-security-baseline.md: sha256:bf3ec1190a3b34b97a6e1f065f5aeae4003fe6b0bffeec31eb7dd2f63c68f192
+    .claude/skills/corporate-grounding/references/03-data-classification.md: sha256:5745bb0a6b427e25ce9d3ec15f6048a158bec9b45c2ae0619f392aeb6ff297df
+    .codex/agents/impl-conformance.toml: sha256:697ba5e7d484d68745c1da855f7f19073e79487904ec500db7e999ac935e689e
+    .codex/agents/implementer.toml: sha256:964b90830bb8cd9cec99ec4cd43b4d9d56abaeae8dfdec11906f2f0393859b07
+    .codex/agents/security-gate.toml: sha256:bef03f689a4f39542900564efd672c78cf8045d505b1523ec5490d76bdf662ee
+    .codex/agents/spec-validator.toml: sha256:d9ddc962a7c016a0803fd45687f5674b9c2dedf16f925f41135690d1246765c4
+    .codex/agents/spec-writer.toml: sha256:bbcf5a3da8e27bed4697ed7860928dd2cc141f63a9fc17976142d0259e66e0e1
+    .codex/hooks/platform-harness/scripts/block_secrets.py: sha256:fe7eb6f66053cd8791fb07ad4f8d321a9410c3316e0e99960b063de7007e0d5b
+    .github/agents/impl-conformance.agent.md: sha256:61409f9d64444871262293aa75c25683959e5312c5ff0ae1076b5e2546d12ac5
+    .github/agents/implementer.agent.md: sha256:11d86e8484b126d6d32d394b36e9b71e6d9f5ccb72e0464977fcf2620be5a29b
+    .github/agents/security-gate.agent.md: sha256:c75fcc78dba0292fc91fc248a75f62510b5befd5b81315547401e8d0ff8700bb
+    .github/agents/spec-validator.agent.md: sha256:0dc4511a73339f3fe093f32f74de0952104e0056e334ebb6721d814fb2b858b8
+    .github/agents/spec-writer.agent.md: sha256:044610a300b624e1e6493cbee059fb8f74118676f8145c8d52d116d332d12e58
+    .github/hooks/platform-harness-block-secrets.json: sha256:c0342b00d4c13767d8223565f8deeac6cb697f9bfb084d4b2ef88672c1b01e8d
+    .github/hooks/scripts/platform-harness/scripts/block_secrets.py: sha256:fe7eb6f66053cd8791fb07ad4f8d321a9410c3316e0e99960b063de7007e0d5b
+    .github/instructions/data-classification.instructions.md: sha256:d3db60fb6e4bea47d78cfcfd322ce6e33be535b1869b071d7b94af3feaf52ef2
+    .github/instructions/engineering-standards.instructions.md: sha256:5fa16668202e5b1330349855a68a251bc2c9657e2d2999ec0f3170c14cd2a487
+    .github/instructions/security-baseline.instructions.md: sha256:10adf98ee77069aac56e7e58139080988014488b9e639fb1d2958021b23b7185
+    .github/prompts/feature.prompt.md: sha256:7ebccf1fab734c57ad4f86555ce52fb47f1b16b019c4623864d6b2981a548c4e
+    .opencode/agents/impl-conformance.md: sha256:61409f9d64444871262293aa75c25683959e5312c5ff0ae1076b5e2546d12ac5
+    .opencode/agents/implementer.md: sha256:11d86e8484b126d6d32d394b36e9b71e6d9f5ccb72e0464977fcf2620be5a29b
+    .opencode/agents/security-gate.md: sha256:c75fcc78dba0292fc91fc248a75f62510b5befd5b81315547401e8d0ff8700bb
+    .opencode/agents/spec-validator.md: sha256:0dc4511a73339f3fe093f32f74de0952104e0056e334ebb6721d814fb2b858b8
+    .opencode/agents/spec-writer.md: sha256:044610a300b624e1e6493cbee059fb8f74118676f8145c8d52d116d332d12e58
+    .opencode/commands/feature.md: sha256:8b4de0839d4fd2dff7cc0f304e027f0a2a1ed555de7079c4ffafd657da8860bb
+  content_hash: sha256:57b0cfa91eeb96337add3c2a18b76099aac6bd6c59485dbde9210b2c5eaa79e8
+  declared_license: Apache-2.0
+deployments:
+- kind: project-relative
+  target: claude
+  value: .claude/agents/impl-conformance.md
+  runtime: null
+  scope: project
+  owners:
+  - elpalmeral-org/platform-harness
+  active_owner: elpalmeral-org/platform-harness
+  content_hash: sha256:61409f9d64444871262293aa75c25683959e5312c5ff0ae1076b5e2546d12ac5
+- kind: project-relative
+  target: claude
+  value: .claude/agents/implementer.md
+  runtime: null
+  scope: project
+  owners:
+  - elpalmeral-org/platform-harness
+  active_owner: elpalmeral-org/platform-harness
+  content_hash: sha256:11d86e8484b126d6d32d394b36e9b71e6d9f5ccb72e0464977fcf2620be5a29b
+- kind: project-relative
+  target: claude
+  value: .claude/agents/security-gate.md
+  runtime: null
+  scope: project
+  owners:
+  - elpalmeral-org/platform-harness
+  active_owner: elpalmeral-org/platform-harness
+  content_hash: sha256:c75fcc78dba0292fc91fc248a75f62510b5befd5b81315547401e8d0ff8700bb
+- kind: project-relative
+  target: claude
+  value: .claude/agents/spec-validator.md
+  runtime: null
+  scope: project
+  owners:
+  - elpalmeral-org/platform-harness
+  active_owner: elpalmeral-org/platform-harness
+  content_hash: sha256:0dc4511a73339f3fe093f32f74de0952104e0056e334ebb6721d814fb2b858b8
+- kind: project-relative
+  target: claude
+  value: .claude/agents/spec-writer.md
+  runtime: null
+  scope: project
+  owners:
+  - elpalmeral-org/platform-harness
+  active_owner: elpalmeral-org/platform-harness
+  content_hash: sha256:044610a300b624e1e6493cbee059fb8f74118676f8145c8d52d116d332d12e58
+- kind: project-relative
+  target: claude
+  value: .claude/commands/feature.md
+  runtime: null
+  scope: project
+  owners:
+  - elpalmeral-org/platform-harness
+  active_owner: elpalmeral-org/platform-harness
+  content_hash: sha256:8b4de0839d4fd2dff7cc0f304e027f0a2a1ed555de7079c4ffafd657da8860bb
+- kind: project-relative
+  target: claude
+  value: .claude/hooks/platform-harness/scripts/block_secrets.py
+  runtime: null
+  scope: project
+  owners:
+  - elpalmeral-org/platform-harness
+  active_owner: elpalmeral-org/platform-harness
+  content_hash: sha256:fe7eb6f66053cd8791fb07ad4f8d321a9410c3316e0e99960b063de7007e0d5b
+- kind: project-relative
+  target: claude
+  value: .claude/rules/data-classification.md
+  runtime: null
+  scope: project
+  owners:
+  - elpalmeral-org/platform-harness
+  active_owner: elpalmeral-org/platform-harness
+  content_hash: sha256:8ea8b999598f3114c3a44510641b7393cfe3d967b67f2edc4c525cd4177e36da
+- kind: project-relative
+  target: claude
+  value: .claude/rules/engineering-standards.md
+  runtime: null
+  scope: project
+  owners:
+  - elpalmeral-org/platform-harness
+  active_owner: elpalmeral-org/platform-harness
+  content_hash: sha256:f89d11c74e225b3697b12f1f3f33b4fed145623c3418ab1b95b1d7260363e175
+- kind: project-relative
+  target: claude
+  value: .claude/rules/security-baseline.md
+  runtime: null
+  scope: project
+  owners:
+  - elpalmeral-org/platform-harness
+  active_owner: elpalmeral-org/platform-harness
+  content_hash: sha256:211dcf2097d3d890da869b496e52c8b4b51c8102f0c41cffd0816ad6c0108d07
+- kind: project-relative
+  target: claude
+  value: .claude/skills/corporate-grounding
+  runtime: null
+  scope: project
+  owners:
+  - elpalmeral-org/platform-harness
+  active_owner: elpalmeral-org/platform-harness
+  content_hash: null
+- kind: project-relative
+  target: claude
+  value: .claude/skills/corporate-grounding/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - elpalmeral-org/platform-harness
+  active_owner: elpalmeral-org/platform-harness
+  content_hash: sha256:5fde8eed9d4f5e4333a9889e30cdba60e0344acc04efd8f359701a4f1383444b
+- kind: project-relative
+  target: claude
+  value: .claude/skills/corporate-grounding/references/01-engineering-standards.md
+  runtime: null
+  scope: project
+  owners:
+  - elpalmeral-org/platform-harness
+  active_owner: elpalmeral-org/platform-harness
+  content_hash: sha256:a45e5313d78333705a1f88fccaa3dde257d6e86187cb306ff13fc716827b057a
+- kind: project-relative
+  target: claude
+  value: .claude/skills/corporate-grounding/references/02-security-baseline.md
+  runtime: null
+  scope: project
+  owners:
+  - elpalmeral-org/platform-harness
+  active_owner: elpalmeral-org/platform-harness
+  content_hash: sha256:bf3ec1190a3b34b97a6e1f065f5aeae4003fe6b0bffeec31eb7dd2f63c68f192
+- kind: project-relative
+  target: claude
+  value: .claude/skills/corporate-grounding/references/03-data-classification.md
+  runtime: null
+  scope: project
+  owners:
+  - elpalmeral-org/platform-harness
+  active_owner: elpalmeral-org/platform-harness
+  content_hash: sha256:5745bb0a6b427e25ce9d3ec15f6048a158bec9b45c2ae0619f392aeb6ff297df
+- kind: project-relative
+  target: codex
+  value: .agents/skills/corporate-grounding
+  runtime: null
+  scope: project
+  owners:
+  - elpalmeral-org/platform-harness
+  active_owner: elpalmeral-org/platform-harness
+  content_hash: null
+- kind: project-relative
+  target: codex
+  value: .agents/skills/corporate-grounding/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - elpalmeral-org/platform-harness
+  active_owner: elpalmeral-org/platform-harness
+  content_hash: sha256:5fde8eed9d4f5e4333a9889e30cdba60e0344acc04efd8f359701a4f1383444b
+- kind: project-relative
+  target: codex
+  value: .agents/skills/corporate-grounding/references/01-engineering-standards.md
+  runtime: null
+  scope: project
+  owners:
+  - elpalmeral-org/platform-harness
+  active_owner: elpalmeral-org/platform-harness
+  content_hash: sha256:a45e5313d78333705a1f88fccaa3dde257d6e86187cb306ff13fc716827b057a
+- kind: project-relative
+  target: codex
+  value: .agents/skills/corporate-grounding/references/02-security-baseline.md
+  runtime: null
+  scope: project
+  owners:
+  - elpalmeral-org/platform-harness
+  active_owner: elpalmeral-org/platform-harness
+  content_hash: sha256:bf3ec1190a3b34b97a6e1f065f5aeae4003fe6b0bffeec31eb7dd2f63c68f192
+- kind: project-relative
+  target: codex
+  value: .agents/skills/corporate-grounding/references/03-data-classification.md
+  runtime: null
+  scope: project
+  owners:
+  - elpalmeral-org/platform-harness
+  active_owner: elpalmeral-org/platform-harness
+  content_hash: sha256:5745bb0a6b427e25ce9d3ec15f6048a158bec9b45c2ae0619f392aeb6ff297df
+- kind: project-relative
+  target: codex
+  value: .codex/agents/impl-conformance.toml
+  runtime: null
+  scope: project
+  owners:
+  - elpalmeral-org/platform-harness
+  active_owner: elpalmeral-org/platform-harness
+  content_hash: sha256:697ba5e7d484d68745c1da855f7f19073e79487904ec500db7e999ac935e689e
+- kind: project-relative
+  target: codex
+  value: .codex/agents/implementer.toml
+  runtime: null
+  scope: project
+  owners:
+  - elpalmeral-org/platform-harness
+  active_owner: elpalmeral-org/platform-harness
+  content_hash: sha256:964b90830bb8cd9cec99ec4cd43b4d9d56abaeae8dfdec11906f2f0393859b07
+- kind: project-relative
+  target: codex
+  value: .codex/agents/security-gate.toml
+  runtime: null
+  scope: project
+  owners:
+  - elpalmeral-org/platform-harness
+  active_owner: elpalmeral-org/platform-harness
+  content_hash: sha256:bef03f689a4f39542900564efd672c78cf8045d505b1523ec5490d76bdf662ee
+- kind: project-relative
+  target: codex
+  value: .codex/agents/spec-validator.toml
+  runtime: null
+  scope: project
+  owners:
+  - elpalmeral-org/platform-harness
+  active_owner: elpalmeral-org/platform-harness
+  content_hash: sha256:d9ddc962a7c016a0803fd45687f5674b9c2dedf16f925f41135690d1246765c4
+- kind: project-relative
+  target: codex
+  value: .codex/agents/spec-writer.toml
+  runtime: null
+  scope: project
+  owners:
+  - elpalmeral-org/platform-harness
+  active_owner: elpalmeral-org/platform-harness
+  content_hash: sha256:bbcf5a3da8e27bed4697ed7860928dd2cc141f63a9fc17976142d0259e66e0e1
+- kind: project-relative
+  target: codex
+  value: .codex/hooks/platform-harness/scripts/block_secrets.py
+  runtime: null
+  scope: project
+  owners:
+  - elpalmeral-org/platform-harness
+  active_owner: elpalmeral-org/platform-harness
+  content_hash: sha256:fe7eb6f66053cd8791fb07ad4f8d321a9410c3316e0e99960b063de7007e0d5b
+- kind: project-relative
+  target: copilot
+  value: .github/agents/impl-conformance.agent.md
+  runtime: null
+  scope: project
+  owners:
+  - elpalmeral-org/platform-harness
+  active_owner: elpalmeral-org/platform-harness
+  content_hash: sha256:61409f9d64444871262293aa75c25683959e5312c5ff0ae1076b5e2546d12ac5
+- kind: project-relative
+  target: copilot
+  value: .github/agents/implementer.agent.md
+  runtime: null
+  scope: project
+  owners:
+  - elpalmeral-org/platform-harness
+  active_owner: elpalmeral-org/platform-harness
+  content_hash: sha256:11d86e8484b126d6d32d394b36e9b71e6d9f5ccb72e0464977fcf2620be5a29b
+- kind: project-relative
+  target: copilot
+  value: .github/agents/security-gate.agent.md
+  runtime: null
+  scope: project
+  owners:
+  - elpalmeral-org/platform-harness
+  active_owner: elpalmeral-org/platform-harness
+  content_hash: sha256:c75fcc78dba0292fc91fc248a75f62510b5befd5b81315547401e8d0ff8700bb
+- kind: project-relative
+  target: copilot
+  value: .github/agents/spec-validator.agent.md
+  runtime: null
+  scope: project
+  owners:
+  - elpalmeral-org/platform-harness
+  active_owner: elpalmeral-org/platform-harness
+  content_hash: sha256:0dc4511a73339f3fe093f32f74de0952104e0056e334ebb6721d814fb2b858b8
+- kind: project-relative
+  target: copilot
+  value: .github/agents/spec-writer.agent.md
+  runtime: null
+  scope: project
+  owners:
+  - elpalmeral-org/platform-harness
+  active_owner: elpalmeral-org/platform-harness
+  content_hash: sha256:044610a300b624e1e6493cbee059fb8f74118676f8145c8d52d116d332d12e58
+- kind: project-relative
+  target: copilot
+  value: .github/hooks/platform-harness-block-secrets.json
+  runtime: null
+  scope: project
+  owners:
+  - elpalmeral-org/platform-harness
+  active_owner: elpalmeral-org/platform-harness
+  content_hash: sha256:c0342b00d4c13767d8223565f8deeac6cb697f9bfb084d4b2ef88672c1b01e8d
+- kind: project-relative
+  target: copilot
+  value: .github/hooks/scripts/platform-harness/scripts/block_secrets.py
+  runtime: null
+  scope: project
+  owners:
+  - elpalmeral-org/platform-harness
+  active_owner: elpalmeral-org/platform-harness
+  content_hash: sha256:fe7eb6f66053cd8791fb07ad4f8d321a9410c3316e0e99960b063de7007e0d5b
+- kind: project-relative
+  target: copilot
+  value: .github/instructions/data-classification.instructions.md
+  runtime: null
+  scope: project
+  owners:
+  - elpalmeral-org/platform-harness
+  active_owner: elpalmeral-org/platform-harness
+  content_hash: sha256:d3db60fb6e4bea47d78cfcfd322ce6e33be535b1869b071d7b94af3feaf52ef2
+- kind: project-relative
+  target: copilot
+  value: .github/instructions/engineering-standards.instructions.md
+  runtime: null
+  scope: project
+  owners:
+  - elpalmeral-org/platform-harness
+  active_owner: elpalmeral-org/platform-harness
+  content_hash: sha256:5fa16668202e5b1330349855a68a251bc2c9657e2d2999ec0f3170c14cd2a487
+- kind: project-relative
+  target: copilot
+  value: .github/instructions/security-baseline.instructions.md
+  runtime: null
+  scope: project
+  owners:
+  - elpalmeral-org/platform-harness
+  active_owner: elpalmeral-org/platform-harness
+  content_hash: sha256:10adf98ee77069aac56e7e58139080988014488b9e639fb1d2958021b23b7185
+- kind: project-relative
+  target: copilot
+  value: .github/prompts/feature.prompt.md
+  runtime: null
+  scope: project
+  owners:
+  - elpalmeral-org/platform-harness
+  active_owner: elpalmeral-org/platform-harness
+  content_hash: sha256:7ebccf1fab734c57ad4f86555ce52fb47f1b16b019c4623864d6b2981a548c4e
+- kind: uri
+  target: mcp
+  value: port
+  runtime: claude
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: sha256:8d8d5581905adc521263076c5bdc2d000c44b836349a0842e6059eaf4991e42b
+- kind: uri
+  target: mcp
+  value: port
+  runtime: codex
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: sha256:4a52d41e8f393458fdf9701fd4c194ed32257e5b58e35b4d60a97707aef20f90
+- kind: uri
+  target: mcp
+  value: port
+  runtime: copilot
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: null
+- kind: uri
+  target: mcp
+  value: port
+  runtime: opencode
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: null
+- kind: project-relative
+  target: opencode
+  value: .opencode/agents/impl-conformance.md
+  runtime: null
+  scope: project
+  owners:
+  - elpalmeral-org/platform-harness
+  active_owner: elpalmeral-org/platform-harness
+  content_hash: sha256:61409f9d64444871262293aa75c25683959e5312c5ff0ae1076b5e2546d12ac5
+- kind: project-relative
+  target: opencode
+  value: .opencode/agents/implementer.md
+  runtime: null
+  scope: project
+  owners:
+  - elpalmeral-org/platform-harness
+  active_owner: elpalmeral-org/platform-harness
+  content_hash: sha256:11d86e8484b126d6d32d394b36e9b71e6d9f5ccb72e0464977fcf2620be5a29b
+- kind: project-relative
+  target: opencode
+  value: .opencode/agents/security-gate.md
+  runtime: null
+  scope: project
+  owners:
+  - elpalmeral-org/platform-harness
+  active_owner: elpalmeral-org/platform-harness
+  content_hash: sha256:c75fcc78dba0292fc91fc248a75f62510b5befd5b81315547401e8d0ff8700bb
+- kind: project-relative
+  target: opencode
+  value: .opencode/agents/spec-validator.md
+  runtime: null
+  scope: project
+  owners:
+  - elpalmeral-org/platform-harness
+  active_owner: elpalmeral-org/platform-harness
+  content_hash: sha256:0dc4511a73339f3fe093f32f74de0952104e0056e334ebb6721d814fb2b858b8
+- kind: project-relative
+  target: opencode
+  value: .opencode/agents/spec-writer.md
+  runtime: null
+  scope: project
+  owners:
+  - elpalmeral-org/platform-harness
+  active_owner: elpalmeral-org/platform-harness
+  content_hash: sha256:044610a300b624e1e6493cbee059fb8f74118676f8145c8d52d116d332d12e58
+- kind: project-relative
+  target: opencode
+  value: .opencode/commands/feature.md
+  runtime: null
+  scope: project
+  owners:
+  - elpalmeral-org/platform-harness
+  active_owner: elpalmeral-org/platform-harness
+  content_hash: sha256:8b4de0839d4fd2dff7cc0f304e027f0a2a1ed555de7079c4ffafd657da8860bb
+mcp_servers:
+- port
+mcp_configs:
+  port:
+    name: port
+    transport: http
+    registry: false
+    headers:
+      x-read-only-mode: '1'
+    url: https://mcp.port.io/v1
+mcp_target_servers:
+  claude:
+  - port
+  codex:
+  - port
+  copilot:
+  - port
+  opencode:
+  - port
+mcp_config_provenance:
+  port: platform-harness

@@ -1,0 +1,134 @@
+# Puerta de la plataforma (F4.3, ADR 0023): evalúa policy/opa/pr_gates.rego de platform-harness
+# contra este PR. Construye el "input" que documenta la cabecera de ese fichero: checks (apm-audit,
+# harness-signature, openspec), harness.version (de apm.lock.yaml) y metadatos del PR.
+name: harness-ok
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+  pull-requests: read
+
+concurrency:
+  group: harness-ok-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  harness-ok:
+    name: harness-ok
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: apm-cli 0.35.0 (pip, aislado con pipx)
+        run: pipx install apm-cli==0.35.0
+
+      - name: apm install --frozen (sin resolver nada nuevo)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: apm install --frozen
+
+      - name: apm audit --ci (drift del harness)
+        id: audit
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if apm audit --ci; then
+            echo "result=success" >> "$GITHUB_OUTPUT"
+          else
+            echo "result=failure" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: sigstore/cosign-installer@756fe2d284c7292c4e9b62c8a28f1e5629c59532 # v4.1.3
+
+      - name: Firma de la release fijada en apm.lock.yaml
+        id: signature
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          version="$(yq -r '.dependencies[] | select(.name == "platform-harness") | .version' apm.lock.yaml)"
+          commit="$(yq -r '.dependencies[] | select(.name == "platform-harness") | .resolved_commit' apm.lock.yaml)"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          tag="harness-v$version"
+          dir="$(mktemp -d)"
+          if ! gh release download "$tag" --repo elpalmeral-org/platform-harness --dir "$dir"; then
+            echo "result=failure" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          manifest_commit="$(jq -r '.commit' "$dir/manifest.json")"
+          if [ "$manifest_commit" != "$commit" ]; then
+            echo "::error::manifest.json de $tag dice commit $manifest_commit, apm.lock.yaml fija $commit"
+            echo "result=failure" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          archive="$(jq -r '.archive' "$dir/manifest.json")"
+          signature="$(jq -r '.signature' "$dir/manifest.json")"
+          if cosign verify-blob --bundle "$dir/$signature" \
+              --certificate-identity-regexp 'https://github.com/elpalmeral-org/platform-harness/.github/workflows/release.yml@.*' \
+              --certificate-oidc-issuer https://token.actions.githubusercontent.com \
+              "$dir/$archive"; then
+            echo "result=success" >> "$GITHUB_OUTPUT"
+          else
+            echo "result=failure" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "24"
+      - name: OpenSpec válido
+        id: openspec
+        run: |
+          if npx --yes @fission-ai/openspec@1.15.0 validate --all --strict; then
+            echo "result=success" >> "$GITHUB_OUTPUT"
+          else
+            echo "result=failure" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Metadatos del PR
+        id: pr
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          jq -c '{author: .pull_request.user.login, title: .pull_request.title,
+                   labels: [.pull_request.labels[].name], body: (.pull_request.body // "")}' \
+            "$GITHUB_EVENT_PATH" > /tmp/pr_meta.json
+
+          gh pr diff "$PR_NUMBER" --name-only | jq -R -s -c 'split("\n") | map(select(length > 0))' \
+            > /tmp/changed_files.json
+
+          gh api "repos/${{ github.repository }}/contents/openspec/changes?ref=main" \
+              --jq '[.[] | select(.type == "dir" and .name != "archive") | .name]' \
+            > /tmp/openspec_changes_in_base.json 2>/dev/null \
+            || echo '[]' > /tmp/openspec_changes_in_base.json
+
+      - name: Entrada para pr_gates.rego
+        run: |
+          jq -n \
+            --slurpfile pr /tmp/pr_meta.json \
+            --slurpfile changed /tmp/changed_files.json \
+            --slurpfile base /tmp/openspec_changes_in_base.json \
+            --arg apm_audit "${{ steps.audit.outputs.result }}" \
+            --arg harness_signature "${{ steps.signature.outputs.result }}" \
+            --arg openspec "${{ steps.openspec.outputs.result }}" \
+            --arg version "${{ steps.signature.outputs.version }}" \
+            '{
+              checks: {"apm-audit": $apm_audit, "harness-signature": $harness_signature, openspec: $openspec},
+              harness: {version: $version},
+              pr: ($pr[0] + {changed_files: $changed[0], openspec_changes_in_base: $base[0]})
+            }' > input.json
+          cat input.json
+
+      - uses: open-policy-agent/setup-opa@34a30e8a924d1b03ce2cf7abe97250bbb1f332b5 # v2.2.0
+        with:
+          version: latest
+
+      - name: policy/opa/pr_gates.rego (de platform-harness, fijado en apm.lock.yaml)
+        run: |
+          opa eval -i input.json -d apm_modules/elpalmeral-org/platform-harness/policy/opa \
+            -f pretty 'data.meridian.pr_gates' | tee result.json
+          opa eval -i input.json -d apm_modules/elpalmeral-org/platform-harness/policy/opa \
+            --format raw 'data.meridian.pr_gates.allow' | grep -q true

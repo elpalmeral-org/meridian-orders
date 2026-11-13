@@ -1,0 +1,15 @@
+{
+  "PreToolUse": [
+    {
+      "matcher": "*",
+      "hooks": [
+        {
+          "type": "command",
+          "command": "python3 \"${CLAUDE_PROJECT_DIR}/.claude/hooks/platform-harness/scripts/block_secrets.py\"",
+          "timeout": 10
+        }
+      ],
+      "_apm_source": "elpalmeral-org/platform-harness"
+    }
+  ]
+}
