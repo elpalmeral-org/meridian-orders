@@ -28,7 +28,28 @@ capacidad de consulta más sobre un dato que el pedido ya guarda.
 - `apps/backend/src/meridian_orders/api.py`: nuevo parámetro de consulta en `list_orders`.
 - `apps/backend/src/meridian_orders/service.py`: `list_orders` filtra también por `customer_email`.
 - `apps/backend/tests/test_orders.py`: escenarios nuevos.
+- `apps/backend/src/meridian_orders/db.py`: el motor de SQLAlchemy se crea con
+  `hide_parameters=True` (ver «Enmienda» más abajo).
+- `apps/backend/Dockerfile`: el `CMD` de `uvicorn` añade `--no-access-log` (ver «Enmienda»).
+- `apps/backend/tests/test_platform.py`: escenario nuevo sobre la ausencia de fuga.
 - Sin migración: `customer_email` ya es una columna de `orders`.
+
+## Enmienda (tras revisión de `security-gate`)
+
+La primera versión de esta propuesta concluía, en «Grounding y cumplimiento», que no había una vía
+nueva de exposición de C3 porque el dato «sigue sin salir de la respuesta HTTP de la propia API».
+Esa conclusión era incompleta: no contempló el **log de acceso de uvicorn**, que registra la
+*query string* cruda de cada petición — con `customer_email` dentro, en claro — ni los mensajes de
+excepción de SQLAlchemy, que incluyen los valores de los parámetros enlazados (incluido
+`customer_email` al construir el filtro) si una consulta falla.
+
+Un primer intento de solución (un `logging.Filter` que sustituye `customer_email=<valor>` por
+`customer_email=REDACTED` en el *record* del logger `uvicorn.access`) resultó **insuficiente**: es
+evitable con un nombre de parámetro percent-encoded (`customer%5Femail=...`, que Starlette decodifica
+igual pero el filtro no reconoce) y no cubre la fuga por excepción de SQLAlchemy.
+
+**Decisión correcta** (ver `design.md`): eliminar ambas vías en origen, no enmascararlas después de
+escritas.
 
 ## Grounding y cumplimiento
 

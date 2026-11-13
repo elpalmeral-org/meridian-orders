@@ -41,3 +41,9 @@ de estado y correo se combinan con AND cuando se usan a la vez.
 
 - **WHEN** se pide `GET /api/orders?customer_email=no-es-un-email`
 - **THEN** se responde `422` y no se filtra nada
+
+#### Scenario: El correo del cliente nunca queda en claro en los registros de la aplicación
+
+- **WHEN** se filtra por `customer_email` (log de acceso) o falla la consulta a la base de datos
+  mientras se filtra por `customer_email` (log de errores)
+- **THEN** ningún registro de la aplicación contiene el valor del correo en claro
