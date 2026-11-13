@@ -1,0 +1,40 @@
+# Motor A · IMPLEMENT (F5, ADR 0025, ADR 0031). Equivalente, por el motor A, a la Fase B de
+# /feature: implementer + los tres validadores vía HarnessRouter, antes de abrir el PR de código.
+# Mismo bloqueo que aidlc-propose.yml (comprobado ahí, repetido aquí por si cambia antes que esto
+# se use): sin clave de API de la Console de HarnessRouter (F4.7), no hay llamada real.
+name: aidlc-implement
+
+on:
+  workflow_dispatch:
+    inputs:
+      cambio:
+        description: Nombre del cambio OpenSpec ya aprobado (fusionado en main)
+        required: true
+
+permissions: {}
+
+jobs:
+  implement:
+    name: implementer + validadores vía HarnessRouter (motor A)
+    runs-on: arc-aidlc
+    steps:
+      - name: Precondición (igual que implementer.agent.md) y GET /v1/harnesses
+        run: |
+          echo "cambio: ${{ inputs.cambio }}"
+          status=$(curl -s -o /tmp/harnesses.json -w '%{http_code}' --max-time 10 \
+            http://harnessrouter.harnessrouter.svc.cluster.local:3000/v1/harnesses)
+          echo "HTTP $status"
+          cat /tmp/harnesses.json
+          if [ "$status" = "307" ] || grep -q '"next"' /tmp/harnesses.json 2>/dev/null; then
+            echo "::error::HarnessRouter exige sesión/clave de API incluso para listar harnesses." \
+                 "Falta crear una clave de API en la Console de HarnessRouter (F4.7, pendiente de" \
+                 "confirmar). Hasta entonces, el motor A no puede implementar ni validar de verdad."
+            exit 1
+          fi
+          if ! jq -e '.[] | select(.id == "meridian/implementer")' /tmp/harnesses.json > /dev/null 2>&1; then
+            echo "::error::HarnessRouter responde, pero meridian/implementer no está publicado" \
+                 "todavía (harness-sync, F4.7)."
+            exit 1
+          fi
+          echo "meridian/implementer encontrado; el resto (implementer + 3 validadores, PR con" \
+               "el código) llega cuando F4.7 conecte un proveedor real."
