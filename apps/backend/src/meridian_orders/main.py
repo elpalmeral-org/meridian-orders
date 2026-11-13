@@ -11,6 +11,7 @@ from sqlalchemy import text
 from meridian_orders import __version__, api
 from meridian_orders.config import get_settings
 from meridian_orders.db import get_engine
+from meridian_orders.otel import setup_otel
 
 REQUESTS = Counter("meridian_http_requests_total", "Peticiones HTTP", ["method", "route", "status"])
 LATENCY = Histogram("meridian_http_request_seconds", "Latencia HTTP", ["method", "route"])
@@ -22,6 +23,7 @@ app = FastAPI(
     openapi_url="/api/openapi.json",
 )
 app.include_router(api.router)
+setup_otel(app, get_engine())
 
 
 @app.middleware("http")
