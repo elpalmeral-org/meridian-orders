@@ -1,0 +1,15 @@
+{
+  "mcpServers": {
+    "port": {
+      "type": "http",
+      "url": "https://mcp.port.io/v1",
+      "tools": [
+        "*"
+      ],
+      "id": "",
+      "headers": {
+        "x-read-only-mode": "1"
+      }
+    }
+  }
+}

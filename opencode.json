@@ -1,0 +1,12 @@
+{
+  "mcp": {
+    "port": {
+      "type": "remote",
+      "enabled": true,
+      "url": "https://mcp.port.io/v1",
+      "headers": {
+        "x-read-only-mode": "1"
+      }
+    }
+  }
+}

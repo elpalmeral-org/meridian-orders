@@ -1,0 +1,18 @@
+name: meridian-orders
+version: 0.1.0
+description: App de ejemplo del agentic-platform-lab (FastAPI + Angular), consumidora del harness corporativo.
+
+targets:
+  - claude
+  - copilot
+  - codex
+  - opencode
+
+# El pin es el SHA del commit del tag harness-v0.1.0, no el tag en sí: la política de la org
+# (apm-policy.yml, require_pinned_constraint) solo reconoce como "pinned" un SHA de 40 caracteres
+# o un tag literal vX.Y.Z -- nuestro tag harness-vX.Y.Z (ADR 0022-0024) no encaja en ese patrón y
+# se clasificaría como "bare branch que sigue una punta movil". Verificar: cosign verify-blob en
+# https://github.com/elpalmeral-org/platform-harness/releases/tag/harness-v0.1.1
+dependencies:
+  apm:
+    - elpalmeral-org/platform-harness#5df5c1e1830094d033f12224fef72d20717229ab # harness-v0.1.1
