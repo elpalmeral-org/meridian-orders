@@ -12,6 +12,11 @@ dependencies = [
   "psycopg[binary]>=3.3,<3.4",
   "pydantic-settings>=2.16,<2.17",
   "prometheus-client>=0.26,<0.27",
+  # F6.1 (ADR 0032): instrumentación manual, no "zero-code" — necesitamos un
+  # server_request_hook para no mandar la query string (customer_email, dato C3) a las trazas.
+  "opentelemetry-exporter-otlp>=1.45,<1.46",
+  "opentelemetry-instrumentation-fastapi>=0.66b2,<0.67",
+  "opentelemetry-instrumentation-sqlalchemy>=0.66b2,<0.67",
 ]
 
 [dependency-groups]

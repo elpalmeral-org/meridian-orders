@@ -71,6 +71,32 @@ def test_hide_parameters_omits_values_from_db_errors() -> None:
         engine.dispose()
 
 
+def test_strip_query_string_removes_customer_email() -> None:
+    """El server_request_hook de OTel (F6.1, ADR 0032) no debe mandar customer_email (dato C3,
+    corpus/03-data-classification.md §2) a las trazas del obs-stack, igual que ya se evita en el
+    log de acceso y en los errores de SQLAlchemy."""
+    from opentelemetry.sdk.trace import TracerProvider
+
+    from meridian_orders.otel import _strip_query_string
+
+    provider = TracerProvider()
+    tracer = provider.get_tracer(__name__)
+    leaked = "http://api/api/orders?customer_email=compras@acme.example"
+    with tracer.start_as_current_span("test") as span:
+        span.set_attribute("http.target", leaked)
+        span.set_attribute("http.url", leaked)
+        span.set_attribute("url.full", leaked)
+        span.set_attribute("url.query", "customer_email=compras@acme.example")
+
+        _strip_query_string(span, {"path": "/api/orders"})
+
+        assert span.attributes is not None
+        for attribute in ("http.target", "http.url", "url.full"):
+            assert span.attributes[attribute] == "/api/orders"
+        assert span.attributes["url.query"] == ""
+        assert "compras@acme.example" not in str(span.attributes)
+
+
 def test_dockerfile_disables_access_log() -> None:
     """--no-access-log: el log de acceso registraría customer_email en claro en la query string
     (corpus/03-data-classification.md §2)."""
