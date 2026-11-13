@@ -41,7 +41,7 @@ jobs:
                  "Revisa HARNESSROUTER_API_KEY (secreto de este repo) o la Console de HarnessRouter."
             exit 1
           fi
-          if ! jq -e '.[] | select(.name == "meridian/spec-writer")' /tmp/harnesses.json > /dev/null 2>&1; then
+          if ! jq -e '.harnesses[] | select(.name == "meridian/spec-writer")' /tmp/harnesses.json > /dev/null 2>&1; then
             echo "::error::HarnessRouter responde, pero meridian/spec-writer no está publicado todavía" \
                  "(harness-sync, F4.7)."
             exit 1
