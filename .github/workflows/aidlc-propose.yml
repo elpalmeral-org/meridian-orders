@@ -1,12 +1,11 @@
-# Motor A · PROPOSE (F5, ADR 0025 ADR 0031). Lo dispara el workflow "Pedir feature" de Port.
-# Equivalente, por el motor A, a la Fase A de /feature (platform-harness/.apm/prompts/feature.prompt.md):
-# llama a HarnessRouter (UHP) para que el rol meridian/spec-writer@X.Y.Z proponga el cambio OpenSpec.
+# Motor A · PROPOSE (F5, ADR 0025 ADR 0031, ADR 0033). Lo dispara el workflow "Pedir feature" de
+# Port. Equivalente, por el motor A, a la Fase A de /feature
+# (platform-harness/.apm/prompts/feature.prompt.md): llama a HarnessRouter (UHP) para que el rol
+# meridian/spec-writer@X.Y.Z proponga el cambio OpenSpec.
 #
-# Comprobado el 13-nov-2026 (F5): incluso GET /v1/harnesses (solo lectura) redirige a /login — la
-# Console de HarnessRouter exige sesión también para la API. Hace falta una clave de API creada en
-# la Console (F4.7, pendiente de confirmar) antes de que esto pueda llamar a un rol de verdad. Hasta
-# entonces, este workflow prueba la cadena mecánica completa (Port → GitHub → runner de ARC) y falla
-# con un mensaje claro, en vez de simular un resultado que no es real.
+# Hoy solo comprueba que meridian/spec-writer está publicado (harness-sync, F4.7); llamar de
+# verdad al rol (POST /api/harness/v1/responses) y abrir el PR con la spec resultante es trabajo
+# posterior a la prueba de humo, no de este workflow todavía.
 name: aidlc-propose
 
 on:
@@ -27,21 +26,22 @@ jobs:
     runs-on: arc-aidlc
     steps:
       - name: GET /v1/harnesses
+        env:
+          HARNESSROUTER_API_KEY: ${{ secrets.HARNESSROUTER_API_KEY }}
         run: |
           echo "cambio: ${{ inputs.cambio }}"
           echo "petición: ${{ inputs.peticion }}"
           status=$(curl -s -o /tmp/harnesses.json -w '%{http_code}' --max-time 10 \
-            http://harnessrouter.harnessrouter.svc.cluster.local:3000/v1/harnesses)
+            -H "Authorization: Bearer $HARNESSROUTER_API_KEY" \
+            http://harnessrouter.harnessrouter.svc.cluster.local:3000/api/harness/v1/harnesses)
           echo "HTTP $status"
           cat /tmp/harnesses.json
-          if [ "$status" = "307" ] || grep -q '"next"' /tmp/harnesses.json 2>/dev/null; then
-            echo "::error::HarnessRouter exige sesión/clave de API incluso para listar harnesses." \
-                 "Falta crear una clave de API en la Console de HarnessRouter (F4.7, pendiente de" \
-                 "confirmar: conecta OpenRouter/Bonsai y publica meridian/<rol>@X.Y.Z). Hasta" \
-                 "entonces, el motor A no puede proponer specs de verdad."
+          if [ "$status" != "200" ]; then
+            echo "::error::GET /api/harness/v1/harnesses devolvió HTTP $status, no 200." \
+                 "Revisa HARNESSROUTER_API_KEY (secreto de este repo) o la Console de HarnessRouter."
             exit 1
           fi
-          if ! jq -e '.[] | select(.id == "meridian/spec-writer")' /tmp/harnesses.json > /dev/null 2>&1; then
+          if ! jq -e '.[] | select(.name == "meridian/spec-writer")' /tmp/harnesses.json > /dev/null 2>&1; then
             echo "::error::HarnessRouter responde, pero meridian/spec-writer no está publicado todavía" \
                  "(harness-sync, F4.7)."
             exit 1
