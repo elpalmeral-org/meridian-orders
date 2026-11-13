@@ -1,0 +1,50 @@
+# Motor A · PROPOSE (F5, ADR 0025 ADR 0031). Lo dispara el workflow "Pedir feature" de Port.
+# Equivalente, por el motor A, a la Fase A de /feature (platform-harness/.apm/prompts/feature.prompt.md):
+# llama a HarnessRouter (UHP) para que el rol meridian/spec-writer@X.Y.Z proponga el cambio OpenSpec.
+#
+# Comprobado el 13-nov-2026 (F5): incluso GET /v1/harnesses (solo lectura) redirige a /login — la
+# Console de HarnessRouter exige sesión también para la API. Hace falta una clave de API creada en
+# la Console (F4.7, pendiente de confirmar) antes de que esto pueda llamar a un rol de verdad. Hasta
+# entonces, este workflow prueba la cadena mecánica completa (Port → GitHub → runner de ARC) y falla
+# con un mensaje claro, en vez de simular un resultado que no es real.
+name: aidlc-propose
+
+on:
+  workflow_dispatch:
+    inputs:
+      cambio:
+        description: Nombre del cambio OpenSpec, en kebab-case
+        required: true
+      peticion:
+        description: Petición en lenguaje natural
+        required: true
+
+permissions: {}
+
+jobs:
+  propose:
+    name: spec-writer vía HarnessRouter (motor A)
+    runs-on: arc-aidlc
+    steps:
+      - name: GET /v1/harnesses
+        run: |
+          echo "cambio: ${{ inputs.cambio }}"
+          echo "petición: ${{ inputs.peticion }}"
+          status=$(curl -s -o /tmp/harnesses.json -w '%{http_code}' --max-time 10 \
+            http://harnessrouter.harnessrouter.svc.cluster.local:3000/v1/harnesses)
+          echo "HTTP $status"
+          cat /tmp/harnesses.json
+          if [ "$status" = "307" ] || grep -q '"next"' /tmp/harnesses.json 2>/dev/null; then
+            echo "::error::HarnessRouter exige sesión/clave de API incluso para listar harnesses." \
+                 "Falta crear una clave de API en la Console de HarnessRouter (F4.7, pendiente de" \
+                 "confirmar: conecta OpenRouter/Bonsai y publica meridian/<rol>@X.Y.Z). Hasta" \
+                 "entonces, el motor A no puede proponer specs de verdad."
+            exit 1
+          fi
+          if ! jq -e '.[] | select(.id == "meridian/spec-writer")' /tmp/harnesses.json > /dev/null 2>&1; then
+            echo "::error::HarnessRouter responde, pero meridian/spec-writer no está publicado todavía" \
+                 "(harness-sync, F4.7)."
+            exit 1
+          fi
+          echo "meridian/spec-writer encontrado; el resto (POST /v1/responses, PR con la spec)" \
+               "llega cuando F4.7 conecte un proveedor real."
